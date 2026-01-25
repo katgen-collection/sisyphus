@@ -14,6 +14,7 @@
     "@ffmpeg/util": "^0.12.2",
     "comlink": "^4.4.2",
     "jszip": "^3.10.1",
+    "lucide-react": "^0.563.0",
     "next": "16.1.4",
     "pdf-lib": "^1.17.1",
     "react": "19.2.3",
