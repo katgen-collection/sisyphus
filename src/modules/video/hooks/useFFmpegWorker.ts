@@ -6,6 +6,7 @@ import type { ProcessingState } from "@/modules/_shared";
 import type {
   FFmpegProgress,
   VideoOutputFormat,
+  AudioOutputFormat,
   CompressionLevel,
   ConversionResult,
 } from "../types";
@@ -25,6 +26,10 @@ interface UseFFmpegReturn {
       compression?: CompressionLevel;
       fps?: number;
     }
+  ) => Promise<ConversionResult | null>;
+  extractAudio: (
+    file: File,
+    outputFormat: AudioOutputFormat
   ) => Promise<ConversionResult | null>;
   reset: () => void;
 }
@@ -118,6 +123,48 @@ export function useFFmpegWorker(): UseFFmpegReturn {
     []
   );
 
+  const extractAudio = useCallback(
+    async (file: File, outputFormat: AudioOutputFormat): Promise<ConversionResult | null> => {
+      if (!loadedRef.current) {
+        setError("FFmpeg not loaded");
+        setState("error");
+        return null;
+      }
+
+      setState("processing");
+      setProgress(0);
+      setError(null);
+      setLogs([]);
+
+      try {
+        const worker = getFFmpegWorker();
+        const inputData = new Uint8Array(await file.arrayBuffer());
+
+        const result = await worker.extractAudio(
+          inputData,
+          file.name,
+          outputFormat,
+          Comlink.proxy((prog: FFmpegProgress) => {
+            setProgress(Math.round(prog.ratio * 100));
+          }),
+          Comlink.proxy((message: string) => {
+            setLogs((prev) => [...prev.slice(-99), message]);
+          })
+        );
+
+        setState("done");
+        setProgress(100);
+        return result;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Audio extraction failed";
+        setError(message);
+        setState("error");
+        return null;
+      }
+    },
+    []
+  );
+
   const reset = useCallback(() => {
     setState("idle");
     setProgress(0);
@@ -132,6 +179,7 @@ export function useFFmpegWorker(): UseFFmpegReturn {
     logs,
     loadFFmpeg,
     convert,
+    extractAudio,
     reset,
   };
 }

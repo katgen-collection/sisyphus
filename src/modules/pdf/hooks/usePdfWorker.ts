@@ -13,6 +13,7 @@ interface UsePdfWorkerReturn {
   imagesToPdf: (
     images: Array<{ file: File; order: number }>
   ) => Promise<PdfResult | null>;
+  reorderPdf: (file: File, order: number[]) => Promise<PdfResult | null>;
   reset: () => void;
 }
 
@@ -99,12 +100,38 @@ export function usePdfWorker(): UsePdfWorkerReturn {
     [setProcessing, setProgress, setDone, setError]
   );
 
+    const reorderPdf = useCallback(
+      async (file: File, order: number[]): Promise<PdfResult | null> => {
+        setProcessing();
+        setProgress(10);
+
+        try {
+          const worker = getPdfWorker();
+          const pdfData = new Uint8Array(await file.arrayBuffer());
+          setProgress(40);
+
+          const outputName = file.name.replace(/\.pdf$/i, "_reordered.pdf");
+          const result = await worker.reorderPages(pdfData, order, outputName);
+          setProgress(100);
+          setDone();
+
+          return result;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Failed to reorder PDF";
+          setError(message);
+          return null;
+        }
+      },
+      [setProcessing, setProgress, setDone, setError]
+    );
+
   return {
     state,
     progress,
     error,
     optimizePdf,
     imagesToPdf,
+    reorderPdf,
     reset,
   };
 }

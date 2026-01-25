@@ -10,6 +10,7 @@ interface FileUploaderProps {
   maxSizeMB?: number;
   onFilesAccepted: (files: AcceptedFile[]) => void;
   disabled?: boolean;
+  compact?: boolean;
   children?: React.ReactNode;
 }
 
@@ -22,6 +23,7 @@ export function FileUploader({
   maxSizeMB = 2048,
   onFilesAccepted,
   disabled = false,
+  compact = false,
   children,
 }: FileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -101,7 +103,8 @@ export function FileUploader({
       onDragLeave={handleDragLeave}
       className={`
         relative flex flex-col items-center justify-center
-        min-h-48 p-8 rounded-2xl border-2 border-dashed
+        ${compact ? "min-h-28 p-4 rounded-xl" : "min-h-48 p-8 rounded-2xl"}
+        border-2 border-dashed
         transition-all duration-200 cursor-pointer
         ${isDragging
           ? "border-stone-400 bg-stone-100"
@@ -123,7 +126,7 @@ export function FileUploader({
       {children ?? (
         <>
           {/* Boulder icon */}
-          <div className="mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-stone-300 to-stone-400 shadow-inner flex items-center justify-center">
+          <div className="mb-4 w-16 h-16 rounded-full bg-linear-to-br from-stone-300 to-stone-400 shadow-inner flex items-center justify-center">
             <Download className="w-8 h-8 text-stone-600" />
           </div>
           <p className="text-stone-600 font-medium">

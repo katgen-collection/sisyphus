@@ -36,4 +36,14 @@ export interface PdfWorkerAPI {
     images: Array<{ data: Uint8Array; name: string; type: string }>,
     outputName?: string
   ) => Promise<PdfResult>;
+
+  /**
+   * Reorders PDF pages by index.
+   * Order is a 0-based array of page indices.
+   */
+  reorderPages: (
+    pdfData: Uint8Array,
+    order: number[],
+    outputName?: string
+  ) => Promise<PdfResult>;
 }

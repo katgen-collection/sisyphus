@@ -6,6 +6,10 @@ export type VideoInputFormat = (typeof VIDEO_INPUT_FORMATS)[number];
 export const VIDEO_OUTPUT_FORMATS = ["mp4", "gif"] as const;
 export type VideoOutputFormat = (typeof VIDEO_OUTPUT_FORMATS)[number];
 
+/** Supported audio output formats */
+export const AUDIO_OUTPUT_FORMATS = ["mp3", "aac"] as const;
+export type AudioOutputFormat = (typeof AUDIO_OUTPUT_FORMATS)[number];
+
 /** Preset resolution options */
 export const RESOLUTION_PRESETS = {
   "720p": { width: -1, height: 720, label: "720p HD" },
@@ -57,6 +61,13 @@ export interface FFmpegWorkerAPI {
       compression?: CompressionLevel;
       fps?: number;
     },
+    onProgress?: (progress: FFmpegProgress) => void,
+    onLog?: (message: string) => void
+  ) => Promise<ConversionResult>;
+  extractAudio: (
+    inputData: Uint8Array,
+    inputName: string,
+    outputFormat: AudioOutputFormat,
     onProgress?: (progress: FFmpegProgress) => void,
     onLog?: (message: string) => void
   ) => Promise<ConversionResult>;

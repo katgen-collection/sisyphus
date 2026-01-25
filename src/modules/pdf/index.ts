@@ -3,6 +3,7 @@
 export { PdfTools } from "./components/PdfTools";
 export { PdfCompress } from "./components/PdfCompress";
 export { ImagesToPdf } from "./components/ImagesToPdf";
+export { PdfReorder } from "./components/PdfReorder";
 // Note: PdfToImages uses pdfjs-dist which requires client-side only
 // Import it dynamically: dynamic(() => import("@/modules/pdf/components/PdfToImages"))
 export { PdfToolShell } from "./components/PdfToolShell";

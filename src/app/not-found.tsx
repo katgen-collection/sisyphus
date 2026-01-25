@@ -4,21 +4,17 @@ import Link from "next/link";
 import { Home, ArrowLeft } from "lucide-react";
 import { SpinningLogo } from "@/components";
 
-/**
- * Custom 404 page themed around Sisyphus.
- * The boulder that rolled back down the hill...
- */
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
+    <div className="fixed inset-0 flex items-center justify-center px-6 py-12 bg-[var(--background)]">
       <div className="max-w-md w-full text-center">
-        {/* Spinning logo*/}
-        <div className="mb-8">
-          <SpinningLogo 
-            size={120}
+        {/* Spinning logo */}
+        <div className="mb-8 flex justify-center">
+          <SpinningLogo
+            size={240}
             spinning
             spinOnHover={false}
-            className="mx-auto opacity-60"
+            className="opacity-60"
           />
         </div>
 
@@ -32,37 +28,37 @@ export default function NotFound() {
         </h2>
 
         <p className="text-stone-500 mb-8 leading-relaxed">
-          Like Sisyphus, we must push forward. The page you're looking for 
+          Like Sisyphus, we must push forward. The page you're looking for
           seems to have tumbled down the mountain.
         </p>
 
-        {/* Decorative divider */}
+        {/* Divider */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="h-px w-12 bg-stone-300" />
           <div className="w-2 h-2 rounded-full bg-stone-300" />
           <div className="h-px w-12 bg-stone-300" />
         </div>
 
-        {/* Action buttons */}
+        {/* Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-stone-800 text-white rounded-xl font-medium hover:bg-stone-700 transition-colors duration-300"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-stone-800 text-white rounded-xl font-medium hover:bg-stone-700 transition-colors"
           >
             <Home className="w-4 h-4" />
             Return Home
           </Link>
-          
+
           <button
             onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-stone-100 text-stone-700 rounded-xl font-medium hover:bg-stone-200 transition-colors duration-300"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-stone-100 text-stone-700 rounded-xl font-medium hover:bg-stone-200 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Go Back
           </button>
         </div>
 
-        {/* Philosophical touch */}
+        {/* Quote */}
         <p className="mt-12 text-sm text-stone-400 italic">
           "One must imagine Sisyphus happy."
         </p>

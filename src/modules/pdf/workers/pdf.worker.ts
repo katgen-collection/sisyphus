@@ -26,6 +26,7 @@ interface ImageInput {
 interface PdfWorkerAPI {
   optimize: (pdfData: Uint8Array, options?: PdfOptimizeOptions) => Promise<PdfResult>;
   imagesToPdf: (images: ImageInput[], outputName?: string) => Promise<PdfResult>;
+  reorderPages: (pdfData: Uint8Array, order: number[], outputName?: string) => Promise<PdfResult>;
 }
 
 const api: PdfWorkerAPI = {
@@ -92,6 +93,25 @@ const api: PdfWorkerAPI = {
     }
 
     const pdfBytes = await doc.save();
+
+    return {
+      data: pdfBytes,
+      filename: outputName,
+    };
+  },
+
+  async reorderPages(
+    pdfData: Uint8Array,
+    order: number[],
+    outputName: string = "reordered.pdf"
+  ): Promise<PdfResult> {
+    const sourceDoc = await PDFDocument.load(pdfData, { ignoreEncryption: true });
+    const resultDoc = await PDFDocument.create();
+
+    const copied = await resultDoc.copyPages(sourceDoc, order);
+    copied.forEach((page) => resultDoc.addPage(page));
+
+    const pdfBytes = await resultDoc.save();
 
     return {
       data: pdfBytes,

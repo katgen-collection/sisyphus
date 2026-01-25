@@ -45,6 +45,7 @@ export function PdfCompress() {
         accept=".pdf"
         onFilesAccepted={handleFilesAccepted}
         disabled={isProcessing}
+        compact={!!file}
       >
         {file ? (
           <div className="text-center">

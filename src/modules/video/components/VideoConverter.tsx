@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Video, RefreshCw, Minimize2, Maximize2, AlertCircle, Terminal } from "lucide-react";
+import { Video, RefreshCw, Minimize2, Maximize2, AlertCircle, Terminal, Music } from "lucide-react";
 import {
   FileUploader,
   Button,
@@ -13,32 +13,56 @@ import { useFFmpegWorker } from "..";
 import {
   VIDEO_INPUT_FORMATS,
   VIDEO_OUTPUT_FORMATS,
+  AUDIO_OUTPUT_FORMATS,
   RESOLUTION_PRESETS,
   COMPRESSION_LEVELS,
   type VideoOutputFormat,
+  type AudioOutputFormat,
   type CompressionLevel,
   type ResolutionPreset,
 } from "../types";
 
-type VideoTab = "convert" | "compress" | "resize";
+type VideoTab = "convert" | "compress" | "resize" | "audio";
 
 interface TabConfig {
   id: VideoTab;
   label: string;
+  description: string;
   icon: React.ReactNode;
 }
 
 const TABS: TabConfig[] = [
-  { id: "convert", label: "Convert", icon: <RefreshCw className="w-4 h-4" /> },
-  { id: "compress", label: "Compress", icon: <Minimize2 className="w-4 h-4" /> },
-  { id: "resize", label: "Resize", icon: <Maximize2 className="w-4 h-4" /> },
+  {
+    id: "convert",
+    label: "Convert",
+    description: "Change format",
+    icon: <RefreshCw className="w-4 h-4" />,
+  },
+  {
+    id: "compress",
+    label: "Compress",
+    description: "Shrink size",
+    icon: <Minimize2 className="w-4 h-4" />,
+  },
+  {
+    id: "resize",
+    label: "Resize",
+    description: "Change resolution",
+    icon: <Maximize2 className="w-4 h-4" />,
+  },
+  {
+    id: "audio",
+    label: "Extract Audio",
+    description: "MP3 or AAC",
+    icon: <Music className="w-4 h-4" />,
+  },
 ];
 
 /**
  * Video tools component with tabs for conversion, compression, and resizing.
  */
 export function VideoConverter() {
-  const { state, progress, error, loadFFmpeg, convert, reset, logs } = useFFmpegWorker();
+  const { state, progress, error, loadFFmpeg, convert, extractAudio, reset, logs } = useFFmpegWorker();
 
   const [activeTab, setActiveTab] = useState<VideoTab>("convert");
   const [file, setFile] = useState<AcceptedFile | null>(null);
@@ -47,6 +71,7 @@ export function VideoConverter() {
 
   // Conversion options
   const [outputFormat, setOutputFormat] = useState<VideoOutputFormat>("mp4");
+  const [audioFormat, setAudioFormat] = useState<AudioOutputFormat>("mp3");
 
   // Compression options
   const [compression, setCompression] = useState<CompressionLevel>("medium");
@@ -118,18 +143,24 @@ export function VideoConverter() {
         }
         format = "mp4"; // Keep as MP4 for resize
         break;
+
+      case "audio":
+        // Audio extraction handled separately
+        break;
     }
 
-    const result = await convert(file.file, format, {
-      resolution,
-      compression: compressionLevel,
-      fps,
-    });
+    const result = activeTab === "audio"
+      ? await extractAudio(file.file, audioFormat)
+      : await convert(file.file, format, {
+          resolution,
+          compression: compressionLevel,
+          fps,
+        });
 
     if (result) {
       downloadUint8Array(result.data, result.outputName, result.mimeType);
     }
-  }, [file, activeTab, outputFormat, compression, resolutionPreset, customWidth, customHeight, gifFps, convert]);
+  }, [file, activeTab, outputFormat, compression, resolutionPreset, customWidth, customHeight, gifFps, audioFormat, convert, extractAudio]);
 
   const acceptedFormats = VIDEO_INPUT_FORMATS.map((f) => `.${f}`).join(",");
   const isProcessing = state === "processing" || state === "loading";
@@ -145,25 +176,36 @@ export function VideoConverter() {
         return "Compress Video";
       case "resize":
         return "Resize Video";
+      case "audio":
+        return `Extract ${audioFormat.toUpperCase()} Audio`;
     }
-  }, [activeTab, outputFormat, state]);
+  }, [activeTab, outputFormat, audioFormat, state]);
 
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex gap-1 bg-stone-100 p-1 rounded-xl">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-              activeTab === tab.id
-                ? "bg-white text-stone-800 shadow-sm"
-                : "text-stone-500 hover:text-stone-700"
-            }`}
+            className={`
+              group rounded-xl border p-4 text-left transition-all duration-200
+              ${activeTab === tab.id
+                ? "border-stone-300 bg-white shadow-sm"
+                : "border-stone-200 bg-stone-50 hover:border-stone-300 hover:bg-white"
+              }
+            `}
           >
-            {tab.icon}
-            {tab.label}
+            <div className="flex items-center gap-2 text-sm font-semibold text-stone-700">
+              <span className={`w-6 h-6 rounded-lg flex items-center justify-center ${activeTab === tab.id ? "bg-stone-800 text-stone-50" : "bg-stone-200 text-stone-600"}`}>
+                {tab.icon}
+              </span>
+              <span>{tab.label}</span>
+            </div>
+            <p className="mt-2 text-xs text-stone-500 leading-relaxed">
+              {tab.description}
+            </p>
           </button>
         ))}
       </div>
@@ -173,6 +215,7 @@ export function VideoConverter() {
         accept={acceptedFormats}
         onFilesAccepted={handleFilesAccepted}
         disabled={isProcessing}
+        compact={!!file}
       >
         {file ? (
           <div className="text-center">
@@ -328,6 +371,34 @@ export function VideoConverter() {
 
               <p className="text-xs text-stone-400 mt-3">
                 Use -1 for width/height to maintain aspect ratio
+              </p>
+            </div>
+          )}
+
+          {/* Audio Tab */}
+          {activeTab === "audio" && (
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                Output Audio Format
+              </label>
+              <div className="flex gap-2">
+                {AUDIO_OUTPUT_FORMATS.map((fmt) => (
+                  <button
+                    key={fmt}
+                    onClick={() => setAudioFormat(fmt)}
+                    disabled={isProcessing}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wide transition-colors duration-150 ${
+                      audioFormat === fmt
+                        ? "bg-stone-800 text-stone-50"
+                        : "bg-stone-200 text-stone-600 hover:bg-stone-300"
+                    } disabled:opacity-50`}
+                  >
+                    {fmt}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-stone-400 mt-2">
+                Extracts audio without re-encoding video
               </p>
             </div>
           )}

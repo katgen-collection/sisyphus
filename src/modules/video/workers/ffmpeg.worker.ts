@@ -8,6 +8,7 @@ import * as Comlink from "comlink";
 
 // Inline types to avoid module resolution issues in worker context
 type VideoOutputFormat = "mp4" | "gif";
+type AudioOutputFormat = "mp3" | "aac";
 type CompressionLevel = "low" | "medium" | "high";
 
 interface FFmpegProgress {
@@ -36,6 +37,13 @@ interface FFmpegWorkerAPI {
     onProgress?: (progress: FFmpegProgress) => void,
     onLog?: (message: string) => void
   ) => Promise<ConversionResult>;
+  extractAudio: (
+    inputData: Uint8Array,
+    inputName: string,
+    outputFormat: AudioOutputFormat,
+    onProgress?: (progress: FFmpegProgress) => void,
+    onLog?: (message: string) => void
+  ) => Promise<ConversionResult>;
   terminate: () => void;
 }
 
@@ -52,6 +60,11 @@ let loaded = false;
 const OUTPUT_MIME: Record<VideoOutputFormat, string> = {
   mp4: "video/mp4",
   gif: "image/gif",
+};
+
+const AUDIO_MIME: Record<AudioOutputFormat, string> = {
+  mp3: "audio/mpeg",
+  aac: "audio/aac",
 };
 
 const api: FFmpegWorkerAPI = {
@@ -215,6 +228,73 @@ const api: FFmpegWorkerAPI = {
       // Remove listeners
       if (onProgress) {
         ffmpeg.off("progress", () => {});
+      }
+      ffmpeg.off("log", logHandler);
+    }
+  },
+
+  async extractAudio(
+    inputData: Uint8Array,
+    inputName: string,
+    outputFormat: AudioOutputFormat,
+    onProgress?: (progress: FFmpegProgress) => void,
+    onLog?: (message: string) => void
+  ): Promise<ConversionResult> {
+    if (!ffmpeg || !loaded) {
+      throw new Error("FFmpeg not loaded. Call load() first.");
+    }
+
+    const inputExt = inputName.includes(".") ? inputName.split(".").pop() : "mp4";
+    const safeInputName = `input_${Date.now()}.${inputExt ?? "mp4"}`;
+    const outputName = `audio_${Date.now()}.${outputFormat}`;
+
+    const hasExt = inputName.includes(".");
+    const baseName = hasExt ? inputName.replace(/\.[^.]+$/, "") : inputName;
+    const downloadName = `${baseName}_audio.${outputFormat}`;
+
+    const progressHandler = ({ progress, time }: { progress: number; time?: number }) => {
+      if (onProgress) onProgress({ ratio: progress, time });
+    };
+
+    const logHandler = ({ message }: { message: string }) => {
+      console.log("[FFmpeg]", message);
+      if (onLog) onLog(message);
+    };
+
+    if (onProgress) {
+      ffmpeg.on("progress", progressHandler);
+    }
+    ffmpeg.on("log", logHandler);
+
+    try {
+      await ffmpeg.writeFile(safeInputName, inputData);
+
+      const args: string[] = ["-i", safeInputName, "-vn"]; // strip video
+
+      if (outputFormat === "mp3") {
+        args.push("-c:a", "libmp3lame", "-q:a", "2");
+      } else {
+        args.push("-c:a", "aac", "-b:a", "192k");
+      }
+
+      args.push("-y", outputName);
+
+      console.log("[FFmpeg] Running command:", args.join(" "));
+      await ffmpeg.exec(args);
+
+      const data = await ffmpeg.readFile(outputName) as Uint8Array;
+
+      await ffmpeg.deleteFile(safeInputName);
+      await ffmpeg.deleteFile(outputName);
+
+      return {
+        data,
+        outputName: downloadName,
+        mimeType: AUDIO_MIME[outputFormat],
+      };
+    } finally {
+      if (onProgress) {
+        ffmpeg.off("progress", progressHandler);
       }
       ffmpeg.off("log", logHandler);
     }

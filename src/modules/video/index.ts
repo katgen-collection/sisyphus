@@ -8,6 +8,7 @@ export { getFFmpegWorker, terminateFFmpegWorker } from "./workerClient";
 export {
   VIDEO_INPUT_FORMATS,
   VIDEO_OUTPUT_FORMATS,
+  AUDIO_OUTPUT_FORMATS,
   RESOLUTION_PRESETS,
   COMPRESSION_LEVELS,
 } from "./types";
@@ -15,6 +16,7 @@ export {
 export type {
   VideoInputFormat,
   VideoOutputFormat,
+  AudioOutputFormat,
   ResolutionPreset,
   CompressionLevel,
   VideoConversionJob,
