@@ -1,0 +1,42 @@
+{
+  "name": "Sisyphus",
+  "short_name": "Sisyphus",
+  "description": "Privacy-first, local-only file manipulation tools. Zero-knowledge processing.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafaf9",
+  "theme_color": "#292524",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Video Tools",
+      "short_name": "Video",
+      "description": "Convert, compress, and resize videos",
+      "url": "/video",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "PDF Tools",
+      "short_name": "PDF",
+      "description": "Compress, convert, and manipulate PDFs",
+      "url": "/pdf",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
