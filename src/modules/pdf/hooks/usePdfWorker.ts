@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { useProcessingState } from "@/modules/_shared";
-import type { PdfOptimizeOptions, PdfResult } from "../types";
+import type { PdfOptimizeOptions, PdfResult, SignaturePlacement } from "../types";
 import { getPdfWorker, terminatePdfWorker } from "../workerClient";
 
 interface UsePdfWorkerReturn {
@@ -14,6 +14,11 @@ interface UsePdfWorkerReturn {
     images: Array<{ file: File; order: number }>
   ) => Promise<PdfResult | null>;
   reorderPdf: (file: File, order: number[]) => Promise<PdfResult | null>;
+  signPdf: (
+    pdfData: Uint8Array,
+    signatures: SignaturePlacement[],
+    outputName?: string
+  ) => Promise<PdfResult | null>;
   reset: () => void;
 }
 
@@ -125,6 +130,69 @@ export function usePdfWorker(): UsePdfWorkerReturn {
       [setProcessing, setProgress, setDone, setError]
     );
 
+  const signPdf = useCallback(
+    async (
+      pdfData: Uint8Array,
+      signatures: SignaturePlacement[],
+      outputName?: string
+    ): Promise<PdfResult | null> => {
+      setProcessing();
+      setProgress(10);
+
+      try {
+        const worker = getPdfWorker();
+
+        // Convert signature placements to worker format
+        const signaturesForWorker: Array<{
+          pageIndex: number;
+          x: number;
+          y: number;
+          width: number;
+          height: number;
+          imageData: Uint8Array;
+        }> = [];
+
+        for (let i = 0; i < signatures.length; i++) {
+          const sig = signatures[i];
+          // Convert base64 data URL to Uint8Array
+          const base64 = sig.imageDataUrl.split(",")[1];
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let j = 0; j < binary.length; j++) {
+            bytes[j] = binary.charCodeAt(j);
+          }
+
+          signaturesForWorker.push({
+            pageIndex: sig.pageIndex,
+            x: sig.x,
+            y: sig.y,
+            width: sig.width,
+            height: sig.height,
+            imageData: bytes,
+          });
+
+          setProgress(10 + Math.round((i / signatures.length) * 40));
+        }
+
+        setProgress(55);
+        const result = await worker.addSignatures(
+          pdfData,
+          signaturesForWorker,
+          outputName ?? "signed.pdf"
+        );
+        setProgress(100);
+        setDone();
+
+        return result;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to sign PDF";
+        setError(message);
+        return null;
+      }
+    },
+    [setProcessing, setProgress, setDone, setError]
+  );
+
   return {
     state,
     progress,
@@ -132,6 +200,7 @@ export function usePdfWorker(): UsePdfWorkerReturn {
     optimizePdf,
     imagesToPdf,
     reorderPdf,
+    signPdf,
     reset,
   };
 }

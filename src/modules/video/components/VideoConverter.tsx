@@ -8,7 +8,7 @@ import {
   downloadUint8Array,
   type AcceptedFile,
 } from "@/modules/_shared";
-import { LoadingSpinner } from "@/components";
+import { LoadingSpinner, ToolCarousel, type ToolTab } from "@/components";
 import { useFFmpegWorker } from "..";
 import {
   VIDEO_INPUT_FORMATS,
@@ -24,14 +24,7 @@ import {
 
 type VideoTab = "convert" | "compress" | "resize" | "audio";
 
-interface TabConfig {
-  id: VideoTab;
-  label: string;
-  description: string;
-  icon: React.ReactNode;
-}
-
-const TABS: TabConfig[] = [
+const TABS: ToolTab<VideoTab>[] = [
   {
     id: "convert",
     label: "Convert",
@@ -183,32 +176,8 @@ export function VideoConverter() {
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`
-              group rounded-xl border p-4 text-left transition-all duration-200
-              ${activeTab === tab.id
-                ? "border-stone-300 bg-white shadow-sm"
-                : "border-stone-200 bg-stone-50 hover:border-stone-300 hover:bg-white"
-              }
-            `}
-          >
-            <div className="flex items-center gap-2 text-sm font-semibold text-stone-700">
-              <span className={`w-6 h-6 rounded-lg flex items-center justify-center ${activeTab === tab.id ? "bg-stone-800 text-stone-50" : "bg-stone-200 text-stone-600"}`}>
-                {tab.icon}
-              </span>
-              <span>{tab.label}</span>
-            </div>
-            <p className="mt-2 text-xs text-stone-500 leading-relaxed">
-              {tab.description}
-            </p>
-          </button>
-        ))}
-      </div>
+      {/* Tabs carousel */}
+      <ToolCarousel tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* File upload zone */}
       <FileUploader

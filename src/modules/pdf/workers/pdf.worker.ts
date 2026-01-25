@@ -23,10 +23,20 @@ interface ImageInput {
   type: string;
 }
 
+interface SignatureInput {
+  pageIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  imageData: Uint8Array;
+}
+
 interface PdfWorkerAPI {
   optimize: (pdfData: Uint8Array, options?: PdfOptimizeOptions) => Promise<PdfResult>;
   imagesToPdf: (images: ImageInput[], outputName?: string) => Promise<PdfResult>;
   reorderPages: (pdfData: Uint8Array, order: number[], outputName?: string) => Promise<PdfResult>;
+  addSignatures: (pdfData: Uint8Array, signatures: SignatureInput[], outputName?: string) => Promise<PdfResult>;
 }
 
 const api: PdfWorkerAPI = {
@@ -112,6 +122,48 @@ const api: PdfWorkerAPI = {
     copied.forEach((page) => resultDoc.addPage(page));
 
     const pdfBytes = await resultDoc.save();
+
+    return {
+      data: pdfBytes,
+      filename: outputName,
+    };
+  },
+
+  async addSignatures(
+    pdfData: Uint8Array,
+    signatures: SignatureInput[],
+    outputName: string = "signed.pdf"
+  ): Promise<PdfResult> {
+    const doc = await PDFDocument.load(pdfData, { ignoreEncryption: true });
+    const pages = doc.getPages();
+
+    for (const sig of signatures) {
+      const page = pages[sig.pageIndex];
+      if (!page) continue;
+
+      const { width: pageWidth, height: pageHeight } = page.getSize();
+
+      // Embed the signature image (PNG)
+      const signatureImage = await doc.embedPng(sig.imageData);
+
+      // Convert percentages to actual coordinates
+      // Note: PDF coordinates start from bottom-left, so we need to flip Y
+      const x = (sig.x / 100) * pageWidth;
+      const width = (sig.width / 100) * pageWidth;
+      const height = (sig.height / 100) * pageHeight;
+      // Y is from top in our UI but from bottom in PDF
+      const y = pageHeight - (sig.y / 100) * pageHeight - height;
+
+      // Draw the signature on the page
+      page.drawImage(signatureImage, {
+        x,
+        y,
+        width,
+        height,
+      });
+    }
+
+    const pdfBytes = await doc.save();
 
     return {
       data: pdfBytes,

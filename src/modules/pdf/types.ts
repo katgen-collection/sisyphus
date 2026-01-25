@@ -18,6 +18,17 @@ export interface PdfResult {
   filename: string;
 }
 
+/** Signature placement information for PDF signing */
+export interface SignaturePlacement {
+  id: string;
+  pageIndex: number; // 0-based page index
+  x: number; // percentage of page width (0-100)
+  y: number; // percentage of page height (0-100)
+  width: number; // percentage of page width
+  height: number; // percentage of page height
+  imageDataUrl: string; // base64 PNG data URL
+}
+
 /** PDF worker API exposed via Comlink */
 export interface PdfWorkerAPI {
   /**
@@ -44,6 +55,22 @@ export interface PdfWorkerAPI {
   reorderPages: (
     pdfData: Uint8Array,
     order: number[],
+    outputName?: string
+  ) => Promise<PdfResult>;
+
+  /**
+   * Adds signature images to a PDF at specified locations.
+   */
+  addSignatures: (
+    pdfData: Uint8Array,
+    signatures: Array<{
+      pageIndex: number;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      imageData: Uint8Array;
+    }>,
     outputName?: string
   ) => Promise<PdfResult>;
 }

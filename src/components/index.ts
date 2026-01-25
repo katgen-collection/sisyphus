@@ -7,3 +7,4 @@ export { Sidebar } from "./Sidebar";
 export { OfflineIndicator } from "./OfflineIndicator";
 export { SpinningLogo } from "./SpinningLogo";
 export { LoadingSpinner } from "./LoadingSpinner";
+export { ToolCarousel, type ToolTab } from "./ToolCarousel";
