@@ -9,13 +9,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/assets/logo/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/assets/logo/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -29,14 +29,14 @@
       "short_name": "Video",
       "description": "Convert, compress, and resize videos",
       "url": "/video",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/assets/logo/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "PDF Tools",
       "short_name": "PDF",
       "description": "Compress, convert, and manipulate PDFs",
       "url": "/pdf",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/assets/logo/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

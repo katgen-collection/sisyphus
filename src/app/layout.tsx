@@ -14,9 +14,42 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://sisyphus.mikhailjbs.my.id"),
   title: "Sisyphus",
   description: "Privacy-first, local-only file manipulation tools. Zero-knowledge processing.",
+  applicationName: "Sisyphus",
+  alternates: {
+    canonical: "/",
+  },
   manifest: "/manifest.json",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "Sisyphus",
+    description: "Privacy-first, local-only file manipulation tools. Zero-knowledge processing.",
+    type: "website",
+    url: "/",
+    images: [
+      {
+        url: "/assets/logo/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Sisyphus",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Sisyphus",
+    description: "Privacy-first, local-only file manipulation tools. Zero-knowledge processing.",
+    images: ["/assets/logo/icon-512.png"],
+  },
+  icons: {
+    icon: "/assets/logo/logo_svg.svg",
+    apple: "/assets/logo/icon-192.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -44,7 +77,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link rel="apple-touch-icon" href="/assets/logo/icon-192.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-stone-50 min-h-screen`}
