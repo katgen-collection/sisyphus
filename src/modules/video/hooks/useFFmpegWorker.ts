@@ -12,11 +12,15 @@ import type {
 } from "../types";
 import { getFFmpegWorker, terminateFFmpegWorker } from "../workerClient";
 
+/** Files larger than this (bytes) show a warning in the UI. */
+export const LARGE_FILE_THRESHOLD = 500 * 1024 * 1024; // 500 MB
+
 interface UseFFmpegReturn {
   state: ProcessingState;
   progress: number;
   error: string | null;
   logs: string[];
+  isMultiThreaded: boolean;
   loadFFmpeg: () => Promise<void>;
   convert: (
     file: File,
@@ -43,6 +47,7 @@ export function useFFmpegWorker(): UseFFmpegReturn {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [isMultiThreaded, setIsMultiThreaded] = useState(false);
   const loadedRef = useRef(false);
 
   // Cleanup on unmount
@@ -64,6 +69,11 @@ export function useFFmpegWorker(): UseFFmpegReturn {
       const worker = getFFmpegWorker();
       await worker.load();
       loadedRef.current = true;
+
+      // Query threading capability from the worker
+      const mt = await worker.isMultiThreaded();
+      setIsMultiThreaded(mt);
+
       setState("idle");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load FFmpeg";
@@ -106,7 +116,7 @@ export function useFFmpegWorker(): UseFFmpegReturn {
             setProgress(Math.round(prog.ratio * 100));
           }),
           Comlink.proxy((message: string) => {
-            setLogs((prev) => [...prev.slice(-99), message]); // Keep last 100 logs
+            setLogs((prev) => [...prev.slice(-99), message]);
           })
         );
 
@@ -177,6 +187,7 @@ export function useFFmpegWorker(): UseFFmpegReturn {
     progress,
     error,
     logs,
+    isMultiThreaded,
     loadFFmpeg,
     convert,
     extractAudio,

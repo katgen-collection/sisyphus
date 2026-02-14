@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Video, RefreshCw, Minimize2, Maximize2, AlertCircle, Terminal, Music } from "lucide-react";
+import { Video, RefreshCw, Minimize2, Maximize2, AlertCircle, AlertTriangle, Terminal, Music, Cpu } from "lucide-react";
 import {
   FileUploader,
   Button,
@@ -10,6 +10,7 @@ import {
 } from "@/modules/_shared";
 import { LoadingSpinner, ToolCarousel, type ToolTab } from "@/components";
 import { useFFmpegWorker } from "..";
+import { LARGE_FILE_THRESHOLD } from "../hooks/useFFmpegWorker";
 import {
   VIDEO_INPUT_FORMATS,
   VIDEO_OUTPUT_FORMATS,
@@ -55,7 +56,7 @@ const TABS: ToolTab<VideoTab>[] = [
  * Video tools component with tabs for conversion, compression, and resizing.
  */
 export function VideoConverter() {
-  const { state, progress, error, loadFFmpeg, convert, extractAudio, reset, logs } = useFFmpegWorker();
+  const { state, progress, error, loadFFmpeg, convert, extractAudio, reset, logs, isMultiThreaded } = useFFmpegWorker();
 
   const [activeTab, setActiveTab] = useState<VideoTab>("convert");
   const [file, setFile] = useState<AcceptedFile | null>(null);
@@ -145,10 +146,10 @@ export function VideoConverter() {
     const result = activeTab === "audio"
       ? await extractAudio(file.file, audioFormat)
       : await convert(file.file, format, {
-          resolution,
-          compression: compressionLevel,
-          fps,
-        });
+        resolution,
+        compression: compressionLevel,
+        fps,
+      });
 
     if (result) {
       downloadUint8Array(result.data, result.outputName, result.mimeType);
@@ -158,6 +159,7 @@ export function VideoConverter() {
   const acceptedFormats = VIDEO_INPUT_FORMATS.map((f) => `.${f}`).join(",");
   const isProcessing = state === "processing" || state === "loading";
   const canProcess = file && state !== "loading" && state !== "processing";
+  const isLargeFile = file && file.file.size > LARGE_FILE_THRESHOLD;
 
   // Get action label based on tab
   const actionLabel = useMemo(() => {
@@ -176,6 +178,18 @@ export function VideoConverter() {
 
   return (
     <div className="space-y-6">
+      {/* Capability badge */}
+      {state !== "loading" && (
+        <div className="flex items-center gap-2 text-xs">
+          <Cpu className="w-3.5 h-3.5 text-stone-400" />
+          {isMultiThreaded ? (
+            <span className="text-green-600 font-medium">Multi-threaded ✓</span>
+          ) : (
+            <span className="text-amber-600 font-medium">Single-threaded (limited browser)</span>
+          )}
+        </div>
+      )}
+
       {/* Tabs carousel */}
       <ToolCarousel tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -211,6 +225,16 @@ export function VideoConverter() {
         </div>
       )}
 
+      {/* Large file warning */}
+      {isLargeFile && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-700 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span className="text-sm">
+            Large file ({(file.file.size / (1024 * 1024)).toFixed(0)} MB) — processing may take a while{!isMultiThreaded ? " on this device" : ""}.
+          </span>
+        </div>
+      )}
+
       {/* Tab-specific options */}
       {file && (
         <div className="bg-stone-50 rounded-xl p-5 space-y-5">
@@ -227,11 +251,10 @@ export function VideoConverter() {
                       key={fmt}
                       onClick={() => setOutputFormat(fmt)}
                       disabled={isProcessing}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wide transition-colors duration-150 ${
-                        outputFormat === fmt
+                      className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wide transition-colors duration-150 ${outputFormat === fmt
                           ? "bg-stone-800 text-stone-50"
                           : "bg-stone-200 text-stone-600 hover:bg-stone-300"
-                      } disabled:opacity-50`}
+                        } disabled:opacity-50`}
                     >
                       {fmt}
                     </button>
@@ -251,11 +274,10 @@ export function VideoConverter() {
                         key={fps}
                         onClick={() => setGifFps(fps)}
                         disabled={isProcessing}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${
-                          gifFps === fps
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${gifFps === fps
                             ? "bg-stone-800 text-stone-50"
                             : "bg-stone-200 text-stone-600 hover:bg-stone-300"
-                        } disabled:opacity-50`}
+                          } disabled:opacity-50`}
                       >
                         {fps} FPS
                       </button>
@@ -281,11 +303,10 @@ export function VideoConverter() {
                     key={key}
                     onClick={() => setCompression(key as CompressionLevel)}
                     disabled={isProcessing}
-                    className={`px-3 py-3 rounded-lg text-sm transition-colors duration-150 ${
-                      compression === key
+                    className={`px-3 py-3 rounded-lg text-sm transition-colors duration-150 ${compression === key
                         ? "bg-stone-800 text-stone-50"
                         : "bg-stone-200 text-stone-600 hover:bg-stone-300"
-                    } disabled:opacity-50`}
+                      } disabled:opacity-50`}
                   >
                     <div className="font-medium">{key.charAt(0).toUpperCase() + key.slice(1)}</div>
                     <div className="text-xs opacity-75 mt-1">{val.description}</div>
@@ -356,11 +377,10 @@ export function VideoConverter() {
                     key={fmt}
                     onClick={() => setAudioFormat(fmt)}
                     disabled={isProcessing}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wide transition-colors duration-150 ${
-                      audioFormat === fmt
+                    className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wide transition-colors duration-150 ${audioFormat === fmt
                         ? "bg-stone-800 text-stone-50"
                         : "bg-stone-200 text-stone-600 hover:bg-stone-300"
-                    } disabled:opacity-50`}
+                      } disabled:opacity-50`}
                   >
                     {fmt}
                   </button>

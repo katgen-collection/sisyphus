@@ -52,6 +52,7 @@ export interface ConversionResult {
 export interface FFmpegWorkerAPI {
   load: () => Promise<void>;
   isLoaded: () => boolean;
+  isMultiThreaded: () => boolean;
   convert: (
     inputData: Uint8Array,
     inputName: string,
