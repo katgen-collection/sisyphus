@@ -3,7 +3,7 @@
 export { PdfTools } from "./components/PdfTools";
 export { PdfCompress } from "./components/PdfCompress";
 export { ImagesToPdf } from "./components/ImagesToPdf";
-export { PdfReorder } from "./components/PdfReorder";
+export { PdfEdit } from "./components/PdfEdit";
 export { PdfSign } from "./components/PdfSign";
 export { SignatureCanvas } from "./components/SignatureCanvas";
 // Note: PdfToImages uses pdfjs-dist which requires client-side only

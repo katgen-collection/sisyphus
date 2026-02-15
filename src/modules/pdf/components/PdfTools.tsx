@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { Minimize2, Image, FileImage, Loader2, GripVertical, PenTool } from "lucide-react";
+import { Minimize2, Image, FileImage, Loader2, ListPlus, PenTool, Edit3 } from "lucide-react";
 import { ToolCarousel, type ToolTab } from "@/components";
 import { PdfCompress } from "./PdfCompress";
 import { ImagesToPdf } from "./ImagesToPdf";
-import { PdfReorder } from "./PdfReorder";
+import { PdfMerge } from "./PdfMerge";
 import { PdfSign } from "./PdfSign";
+import { PdfEdit } from "./PdfEdit";
 
 // Dynamically import PdfToImages to avoid pdfjs-dist SSR issues
 const PdfToImages = dynamic(
@@ -22,7 +23,7 @@ const PdfToImages = dynamic(
   }
 );
 
-type PdfTab = "compress" | "images-to-pdf" | "pdf-to-images" | "reorder" | "sign";
+type PdfTab = "compress" | "images-to-pdf" | "pdf-to-images" | "merge" | "edit" | "sign";
 
 const tabs: ToolTab<PdfTab>[] = [
   {
@@ -30,6 +31,24 @@ const tabs: ToolTab<PdfTab>[] = [
     label: "Compress",
     description: "Reduce size & clean",
     icon: <Minimize2 className="w-4 h-4" />,
+  },
+  {
+    id: "merge",
+    label: "Merge",
+    description: "Combine & Organize",
+    icon: <ListPlus className="w-4 h-4" />,
+  },
+  {
+    id: "edit",
+    label: "Edit",
+    description: "Add Text & Images",
+    icon: <Edit3 className="w-4 h-4" />,
+  },
+  {
+    id: "sign",
+    label: "Sign",
+    description: "Add signatures",
+    icon: <PenTool className="w-4 h-4" />,
   },
   {
     id: "images-to-pdf",
@@ -43,25 +62,13 @@ const tabs: ToolTab<PdfTab>[] = [
     description: "Export as PNGs",
     icon: <FileImage className="w-4 h-4" />,
   },
-  {
-    id: "reorder",
-    label: "Rearranger",
-    description: "Reorder pages",
-    icon: <GripVertical className="w-4 h-4" />,
-  },
-  {
-    id: "sign",
-    label: "Sign",
-    description: "Add signatures",
-    icon: <PenTool className="w-4 h-4" />,
-  },
 ];
 
 /**
  * Tabbed PDF tools interface.
  */
 export function PdfTools() {
-  const [activeTab, setActiveTab] = useState<PdfTab>("compress");
+  const [activeTab, setActiveTab] = useState<PdfTab>("merge"); // Default to merge as it's the requested feature
 
   return (
     <div className="space-y-6">
@@ -69,11 +76,12 @@ export function PdfTools() {
       <ToolCarousel tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Tab content */}
-      <div>
+      <div className="min-h-[400px]">
         {activeTab === "compress" && <PdfCompress />}
         {activeTab === "images-to-pdf" && <ImagesToPdf />}
         {activeTab === "pdf-to-images" && <PdfToImages />}
-        {activeTab === "reorder" && <PdfReorder />}
+        {activeTab === "merge" && <PdfMerge />}
+        {activeTab === "edit" && <PdfEdit />}
         {activeTab === "sign" && <PdfSign />}
       </div>
     </div>

@@ -29,6 +29,40 @@ export interface SignaturePlacement {
   imageDataUrl: string; // base64 PNG data URL
 }
 
+/** Text annotation for PDF */
+export interface TextAnnotation {
+  type: "text";
+  id: string;
+  text: string;
+  pageIndex: number;
+  x: number; // percentage
+  y: number; // percentage
+  size?: number;
+  color?: string; // hex
+  font?: string;
+}
+
+/** Image annotation for PDF */
+export interface ImageAnnotation {
+  type: "image";
+  id: string;
+  imageData: Uint8Array;
+  pageIndex: number;
+  x: number; // percentage
+  y: number; // percentage
+  width: number; // percentage
+  height: number; // percentage
+}
+
+export type PdfAnnotation = TextAnnotation | ImageAnnotation;
+
+/** Source file info for merging */
+export interface MergePageSource {
+  fileId: string;
+  fileIndex: number;
+  pageIndex: number;
+}
+
 /** PDF worker API exposed via Comlink */
 export interface PdfWorkerAPI {
   /**
@@ -59,6 +93,15 @@ export interface PdfWorkerAPI {
   ) => Promise<PdfResult>;
 
   /**
+  * Merges pages from multiple PDFs in a specific order.
+  */
+  mergeDocuments: (
+    sources: Uint8Array[], // Array of source PDF files
+    pages: MergePageSource[], // Ordered list of pages to include
+    outputName?: string
+  ) => Promise<PdfResult>;
+
+  /**
    * Adds signature images to a PDF at specified locations.
    */
   addSignatures: (
@@ -71,6 +114,15 @@ export interface PdfWorkerAPI {
       height: number;
       imageData: Uint8Array;
     }>,
+    outputName?: string
+  ) => Promise<PdfResult>;
+
+  /**
+   * Adds text and image annotations to a PDF.
+   */
+  annotatePdf: (
+    pdfData: Uint8Array,
+    annotations: PdfAnnotation[],
     outputName?: string
   ) => Promise<PdfResult>;
 }

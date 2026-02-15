@@ -1,0 +1,430 @@
+"use client";
+
+import { useState, useCallback, useEffect, useRef } from "react";
+import { FileText, Loader2, AlertCircle, X, Download, RotateCcw } from "lucide-react";
+import {
+    FileUploader,
+    Button,
+    downloadUint8Array,
+    type AcceptedFile,
+} from "@/modules/_shared";
+import { usePdfWorker } from "../hooks/usePdfWorker";
+import { LoadingSpinner } from "@/components";
+import { MergePageSource } from "../types";
+
+// Type for pdfjs-dist
+type PDFDocumentProxy = {
+    numPages: number;
+    getPage: (pageNumber: number) => Promise<PDFPageProxy>;
+    destroy: () => void;
+};
+
+type PDFPageProxy = {
+    getViewport: (params: { scale: number }) => { width: number; height: number };
+    render: (params: {
+        canvasContext: CanvasRenderingContext2D;
+        viewport: unknown;
+        canvas: HTMLCanvasElement;
+    }) => { promise: Promise<void> };
+};
+
+type PDFJSLib = {
+    getDocument: (params: { data: ArrayBuffer }) => { promise: Promise<PDFDocumentProxy> };
+    GlobalWorkerOptions: { workerSrc: string };
+};
+
+// Lazy load PDF.js
+let pdfjsLib: PDFJSLib | null = null;
+let pdfjsLoading: Promise<PDFJSLib> | null = null;
+
+async function loadPdfjs(): Promise<PDFJSLib> {
+    if (typeof window === "undefined") {
+        throw new Error("PDF rendering is only available in the browser");
+    }
+    if (pdfjsLib) return pdfjsLib;
+    if (pdfjsLoading) return pdfjsLoading;
+
+    pdfjsLoading = new Promise<PDFJSLib>((resolve, reject) => {
+        const existing = (window as unknown as { pdfjsLib?: PDFJSLib }).pdfjsLib;
+        if (existing) {
+            existing.GlobalWorkerOptions.workerSrc =
+                "https://unpkg.com/pdfjs-dist@2.16.105/legacy/build/pdf.worker.min.js";
+            pdfjsLib = existing;
+            resolve(existing);
+            return;
+        }
+
+        const script = document.createElement("script");
+        script.src = "https://unpkg.com/pdfjs-dist@2.16.105/legacy/build/pdf.min.js";
+        script.async = true;
+        script.crossOrigin = "anonymous";
+        script.onload = () => {
+            const lib = (window as unknown as { pdfjsLib?: PDFJSLib }).pdfjsLib;
+            if (!lib) {
+                reject(new Error("PDF.js failed to load"));
+                return;
+            }
+            lib.GlobalWorkerOptions.workerSrc =
+                "https://unpkg.com/pdfjs-dist@2.16.105/legacy/build/pdf.worker.min.js";
+            pdfjsLib = lib;
+            resolve(lib);
+        };
+        script.onerror = () => reject(new Error("Failed to load PDF.js"));
+        document.head.appendChild(script);
+    });
+
+    return pdfjsLoading;
+}
+
+interface PageItem {
+    id: string;
+    fileId: string;
+    pageIndex: number; // 0-based index in original file
+    preview: string;
+    sourceName: string;
+}
+
+interface SourceFile {
+    id: string;
+    file: File;
+    pdfDoc: PDFDocumentProxy | null;
+    color: string;
+}
+
+const FILE_COLORS = [
+    "bg-blue-100 text-blue-800 border-blue-200",
+    "bg-emerald-100 text-emerald-800 border-emerald-200",
+    "bg-amber-100 text-amber-800 border-amber-200",
+    "bg-purple-100 text-purple-800 border-purple-200",
+    "bg-rose-100 text-rose-800 border-rose-200",
+    "bg-cyan-100 text-cyan-800 border-cyan-200",
+];
+
+export function PdfMerge() {
+    const { state, progress, error, mergePdfs, reset } = usePdfWorker();
+
+    const [files, setFiles] = useState<SourceFile[]>([]);
+    const [pages, setPages] = useState<PageItem[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [previewError, setPreviewError] = useState<string | null>(null);
+    const [draggedId, setDraggedId] = useState<string | null>(null);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            files.forEach((f) => {
+                if (f.pdfDoc) f.pdfDoc.destroy();
+            });
+            pages.forEach((p) => URL.revokeObjectURL(p.preview));
+        };
+    }, []);
+
+    const handleFilesAccepted = useCallback(
+        async (acceptedFiles: AcceptedFile[]) => {
+            if (acceptedFiles.length === 0) return;
+
+            setIsLoading(true);
+            setPreviewError(null);
+            reset();
+
+            try {
+                const pdfjs = await loadPdfjs();
+                const newFiles: SourceFile[] = [];
+                const newPages: PageItem[] = [];
+
+                const startColorIdx = files.length % FILE_COLORS.length;
+
+                for (let i = 0; i < acceptedFiles.length; i++) {
+                    const file = acceptedFiles[i];
+                    const fileId = file.id;
+                    const arrayBuffer = await file.file.arrayBuffer();
+                    const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+                    const colorClass = FILE_COLORS[(startColorIdx + i) % FILE_COLORS.length];
+
+                    newFiles.push({
+                        id: fileId,
+                        file: file.file,
+                        pdfDoc,
+                        color: colorClass,
+                    });
+
+                    const scale = 0.5;
+
+                    for (let j = 0; j < pdfDoc.numPages; j++) {
+                        const pageNumber = j + 1;
+                        const page = await pdfDoc.getPage(pageNumber);
+                        const viewport = page.getViewport({ scale });
+
+                        const canvas = document.createElement("canvas");
+                        const context = canvas.getContext("2d");
+                        if (!context) throw new Error("Canvas context not available");
+
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+
+                        await page.render({ canvasContext: context, viewport, canvas }).promise;
+
+                        const blob = await new Promise<Blob | null>((resolve) => {
+                            canvas.toBlob(resolve, "image/jpeg", 0.7);
+                        });
+
+                        if (!blob) continue;
+                        const url = URL.createObjectURL(blob);
+
+                        newPages.push({
+                            id: `${fileId}-${pageNumber}`,
+                            fileId: fileId,
+                            pageIndex: j,
+                            preview: url,
+                            sourceName: file.file.name,
+                        });
+                    }
+                }
+
+                setFiles((prev) => [...prev, ...newFiles]);
+                setPages((prev) => [...prev, ...newPages]);
+            } catch (err) {
+                setPreviewError(err instanceof Error ? err.message : "Failed to load PDF");
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [files, reset]
+    );
+
+    const handleDragStart = useCallback((id: string) => {
+        setDraggedId(id);
+    }, []);
+
+    const handleDragOver = useCallback(
+        (e: React.DragEvent, targetId: string) => {
+            e.preventDefault();
+            if (!draggedId || draggedId === targetId) return;
+
+            setPages((prev) => {
+                const items = [...prev];
+                const draggedIdx = items.findIndex((i) => i.id === draggedId);
+                const targetIdx = items.findIndex((i) => i.id === targetId);
+                if (draggedIdx === -1 || targetIdx === -1) return prev;
+
+                const [dragged] = items.splice(draggedIdx, 1);
+                items.splice(targetIdx, 0, dragged);
+                return items;
+            });
+        },
+        [draggedId]
+    );
+
+    const handleDragEnd = useCallback(() => {
+        setDraggedId(null);
+    }, []);
+
+    const handleReset = useCallback(() => {
+        files.forEach(f => f.pdfDoc?.destroy());
+        pages.forEach(p => URL.revokeObjectURL(p.preview));
+        setFiles([]);
+        setPages([]);
+        setPreviewError(null);
+        reset();
+    }, [files, pages, reset]);
+
+    const removePage = useCallback((pageId: string) => {
+        setPages(prev => {
+            const target = prev.find(p => p.id === pageId);
+            if (target) URL.revokeObjectURL(target.preview);
+            return prev.filter(p => p.id !== pageId);
+        });
+    }, []);
+
+    const handleMerge = useCallback(async () => {
+        if (files.length === 0 || pages.length === 0) return;
+
+        try {
+            const sourceFiles = files.map(f => f.file);
+            const mergePages: MergePageSource[] = pages.map(p => ({
+                fileId: p.fileId,
+                fileIndex: files.findIndex(f => f.id === p.fileId),
+                pageIndex: p.pageIndex
+            }));
+
+            const result = await mergePdfs(sourceFiles, mergePages);
+            if (result) {
+                downloadUint8Array(result.data, result.filename, "application/pdf");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }, [files, pages, mergePdfs]);
+
+    const isProcessing = state === "processing";
+    const canProcess = pages.length > 0 && !isProcessing && !isLoading;
+
+    // No files loaded yet – show full FileUploader
+    if (files.length === 0 && !isLoading) {
+        return (
+            <FileUploader
+                accept=".pdf"
+                multiple
+                onFilesAccepted={handleFilesAccepted}
+                disabled={isProcessing}
+            >
+                {isLoading ? (
+                    <div className="text-center">
+                        <Loader2 className="w-8 h-8 mx-auto text-stone-400 animate-spin mb-2" />
+                        <p className="text-stone-500">Loading PDF...</p>
+                    </div>
+                ) : undefined}
+            </FileUploader>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            {/* File info bar */}
+            <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
+                <FileText className="w-5 h-5 text-stone-500 shrink-0" />
+                <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2">
+                    {files.map(file => (
+                        <span key={file.id} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${file.color}`}>
+                            {file.file.name}
+                        </span>
+                    ))}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                    <button
+                        onClick={handleReset}
+                        className="p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Clear all"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Add more files (compact uploader) */}
+            <FileUploader
+                accept=".pdf"
+                multiple
+                onFilesAccepted={handleFilesAccepted}
+                disabled={isProcessing || isLoading}
+                compact
+            >
+                {isLoading ? (
+                    <div className="flex items-center gap-2 text-stone-500">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">Loading pages...</span>
+                    </div>
+                ) : (
+                    <p className="text-stone-500 text-sm">
+                        Drop more PDF files here or click to add
+                    </p>
+                )}
+            </FileUploader>
+
+            {/* Loading indicator */}
+            {isLoading && (
+                <div className="flex items-center justify-center py-8">
+                    <LoadingSpinner size="md" text="Rendering previews..." />
+                </div>
+            )}
+
+            {/* Page grid */}
+            {!isLoading && pages.length > 0 && (
+                <div className="space-y-2">
+                    <p className="text-xs text-stone-400">
+                        {pages.length} page{pages.length !== 1 ? "s" : ""} · Drag to reorder
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        {pages.map((page, idx) => {
+                            const fileColor = files.find(f => f.id === page.fileId)?.color || "bg-gray-100";
+                            return (
+                                <div
+                                    key={page.id}
+                                    draggable={!isProcessing}
+                                    onDragStart={() => handleDragStart(page.id)}
+                                    onDragOver={(e) => handleDragOver(e, page.id)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`
+                                        relative group rounded-lg overflow-hidden border-2 bg-white cursor-move transition-all
+                                        ${draggedId === page.id
+                                            ? "opacity-50 scale-95 border-stone-400"
+                                            : "border-stone-200 hover:border-stone-400 shadow-sm"
+                                        }
+                                    `}
+                                >
+                                    <div className="aspect-[3/4]">
+                                        <img
+                                            src={page.preview}
+                                            alt={`Page ${idx + 1}`}
+                                            className="w-full h-full object-contain bg-white"
+                                        />
+                                    </div>
+
+                                    {/* Source file badge */}
+                                    <div className={`absolute top-0 left-0 right-0 px-2 py-1 text-[10px] font-medium truncate border-b ${fileColor}`}>
+                                        {page.sourceName}
+                                    </div>
+
+                                    {/* Page number */}
+                                    <div className="absolute bottom-1 left-1 px-2 py-0.5 rounded bg-stone-900/70 text-white text-xs">
+                                        {idx + 1}
+                                    </div>
+
+                                    {/* Remove button */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            removePage(page.id);
+                                        }}
+                                        className="absolute top-7 right-1 p-1 rounded-full bg-white/80 text-stone-400 opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-500 transition-all"
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Error */}
+            {(previewError || error) && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    {previewError || error}
+                </div>
+            )}
+
+            {/* Processing */}
+            {isProcessing && (
+                <div className="flex items-center justify-center py-4">
+                    <LoadingSpinner size="md" text={`Merging... ${progress}%`} />
+                </div>
+            )}
+
+            {/* Success */}
+            {state === "done" && (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700">
+                    Files merged successfully! Download started.
+                </div>
+            )}
+
+            {/* Action */}
+            <div className="flex gap-3">
+                <Button
+                    variant="secondary"
+                    onClick={handleReset}
+                    className="flex-1"
+                >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset
+                </Button>
+                <Button onClick={handleMerge} disabled={!canProcess} loading={isProcessing} className="flex-1">
+                    <Download className="w-4 h-4" />
+                    Merge & Download
+                </Button>
+            </div>
+        </div>
+    );
+}

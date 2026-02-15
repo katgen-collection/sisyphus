@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect } from "react";
 import { useProcessingState } from "@/modules/_shared";
-import type { PdfOptimizeOptions, PdfResult, SignaturePlacement } from "../types";
+import type {
+  PdfOptimizeOptions,
+  PdfResult,
+  SignaturePlacement,
+  MergePageSource,
+  PdfAnnotation,
+} from "../types";
 import { getPdfWorker, terminatePdfWorker } from "../workerClient";
 
 interface UsePdfWorkerReturn {
@@ -14,9 +20,18 @@ interface UsePdfWorkerReturn {
     images: Array<{ file: File; order: number }>
   ) => Promise<PdfResult | null>;
   reorderPdf: (file: File, order: number[]) => Promise<PdfResult | null>;
+  mergePdfs: (
+    files: File[],
+    pages: MergePageSource[]
+  ) => Promise<PdfResult | null>;
   signPdf: (
     pdfData: Uint8Array,
     signatures: SignaturePlacement[],
+    outputName?: string
+  ) => Promise<PdfResult | null>;
+  annotatePdf: (
+    pdfData: Uint8Array,
+    annotations: PdfAnnotation[],
     outputName?: string
   ) => Promise<PdfResult | null>;
   reset: () => void;
@@ -105,30 +120,30 @@ export function usePdfWorker(): UsePdfWorkerReturn {
     [setProcessing, setProgress, setDone, setError]
   );
 
-    const reorderPdf = useCallback(
-      async (file: File, order: number[]): Promise<PdfResult | null> => {
-        setProcessing();
-        setProgress(10);
+  const reorderPdf = useCallback(
+    async (file: File, order: number[]): Promise<PdfResult | null> => {
+      setProcessing();
+      setProgress(10);
 
-        try {
-          const worker = getPdfWorker();
-          const pdfData = new Uint8Array(await file.arrayBuffer());
-          setProgress(40);
+      try {
+        const worker = getPdfWorker();
+        const pdfData = new Uint8Array(await file.arrayBuffer());
+        setProgress(40);
 
-          const outputName = file.name.replace(/\.pdf$/i, "_reordered.pdf");
-          const result = await worker.reorderPages(pdfData, order, outputName);
-          setProgress(100);
-          setDone();
+        const outputName = file.name.replace(/\.pdf$/i, "_reordered.pdf");
+        const result = await worker.reorderPages(pdfData, order, outputName);
+        setProgress(100);
+        setDone();
 
-          return result;
-        } catch (err) {
-          const message = err instanceof Error ? err.message : "Failed to reorder PDF";
-          setError(message);
-          return null;
-        }
-      },
-      [setProcessing, setProgress, setDone, setError]
-    );
+        return result;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to reorder PDF";
+        setError(message);
+        return null;
+      }
+    },
+    [setProcessing, setProgress, setDone, setError]
+  );
 
   const signPdf = useCallback(
     async (
@@ -193,6 +208,68 @@ export function usePdfWorker(): UsePdfWorkerReturn {
     [setProcessing, setProgress, setDone, setError]
   );
 
+  const mergePdfs = useCallback(
+    async (files: File[], pages: MergePageSource[]): Promise<PdfResult | null> => {
+      setProcessing();
+      setProgress(10);
+
+      try {
+        const worker = getPdfWorker();
+
+        // Load all files
+        const sources: Uint8Array[] = [];
+        for (let i = 0; i < files.length; i++) {
+          sources.push(new Uint8Array(await files[i].arrayBuffer()));
+          setProgress(10 + Math.round((i / files.length) * 40));
+        }
+
+        setProgress(55);
+        const result = await worker.mergeDocuments(sources, pages, "merged.pdf");
+        setProgress(100);
+        setDone();
+
+        return result;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to merge PDFs";
+        setError(message);
+        return null;
+      }
+    },
+    [setProcessing, setProgress, setDone, setError]
+  );
+
+  const annotatePdf = useCallback(
+    async (
+      pdfData: Uint8Array,
+      annotations: PdfAnnotation[],
+      outputName?: string
+    ): Promise<PdfResult | null> => {
+      setProcessing();
+      setProgress(10);
+
+      try {
+        const worker = getPdfWorker();
+        setProgress(55);
+
+        const result = await worker.annotatePdf(
+          pdfData,
+          annotations,
+          outputName ?? "annotated.pdf"
+        );
+
+        setProgress(100);
+        setDone();
+
+        return result;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to annotate PDF";
+        setError(message);
+        return null;
+      }
+    },
+    [setProcessing, setProgress, setDone, setError]
+  );
+
   return {
     state,
     progress,
@@ -200,7 +277,9 @@ export function usePdfWorker(): UsePdfWorkerReturn {
     optimizePdf,
     imagesToPdf,
     reorderPdf,
+    mergePdfs,
     signPdf,
+    annotatePdf,
     reset,
   };
 }
