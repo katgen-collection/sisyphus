@@ -24,7 +24,7 @@ import { usePdfWorker } from "../hooks/usePdfWorker";
 import { LoadingSpinner } from "@/components";
 import { PdfAnnotation, TextAnnotation, ImageAnnotation } from "../types";
 
-// PDF Viewer Types (same as other components)
+// PDF Viewer Types
 type PDFDocumentProxy = {
     numPages: number;
     getPage: (pageNumber: number) => Promise<PDFPageProxy>;
@@ -108,12 +108,14 @@ export function PdfEdit() {
 
     // Interaction state
     const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+    const [editingAnnotationId, setEditingAnnotationId] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
     const [interactionStart, setInteractionStart] = useState<{ x: number; y: number } | null>(null);
 
     const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
     const pageContainerRef = useRef<HTMLDivElement>(null);
+    const lastTapTimeRef = useRef<number>(0);
 
     // Cleanup
     useEffect(() => {
@@ -132,6 +134,7 @@ export function PdfEdit() {
             setAnnotations([]);
             setSelectedPageIndex(0);
             setSelectedAnnotationId(null);
+            setEditingAnnotationId(null);
 
             if (pdfDocRef.current) {
                 pdfDocRef.current.destroy();
@@ -209,6 +212,7 @@ export function PdfEdit() {
         };
         setAnnotations(prev => [...prev, newAnnotation]);
         setSelectedAnnotationId(newId);
+        setEditingAnnotationId(null); // Don't auto-enter edit mode
     }, [selectedPageIndex]);
 
     const addImage = useCallback((imgFile: File) => {
@@ -229,7 +233,6 @@ export function PdfEdit() {
                 height: 15,
             };
 
-            // Get real image dimensions to fix aspect ratio
             const img = new Image();
             img.onload = () => {
                 const page = pages[selectedPageIndex];
@@ -240,6 +243,7 @@ export function PdfEdit() {
                 }
                 setAnnotations(prev => [...prev, newAnnotation]);
                 setSelectedAnnotationId(newId);
+                setEditingAnnotationId(null);
                 URL.revokeObjectURL(img.src);
             };
             img.src = URL.createObjectURL(new Blob([arrayBuffer]));
@@ -256,7 +260,8 @@ export function PdfEdit() {
     const removeAnnotation = useCallback((id: string) => {
         setAnnotations(prev => prev.filter(a => a.id !== id));
         if (selectedAnnotationId === id) setSelectedAnnotationId(null);
-    }, [selectedAnnotationId]);
+        if (editingAnnotationId === id) setEditingAnnotationId(null);
+    }, [selectedAnnotationId, editingAnnotationId]);
 
     // --- Helpers to get client coords ---
     function getClientXY(e: React.MouseEvent | React.TouchEvent): { x: number; y: number } | null {
@@ -268,18 +273,38 @@ export function PdfEdit() {
         return { x: e.clientX, y: e.clientY };
     }
 
-    // --- Drag (move) logic ---
-    const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent, id: string) => {
+    // --- Annotation tap handler: single tap = select+drag, double tap = edit text ---
+    const handleAnnotationPointerDown = useCallback((e: React.MouseEvent | React.TouchEvent, id: string) => {
         e.stopPropagation();
         e.preventDefault();
         const coords = getClientXY(e);
         if (!coords) return;
 
+        const now = Date.now();
+        const ann = annotations.find(a => a.id === id);
+        const isDoubleTap = now - lastTapTimeRef.current < 350;
+        lastTapTimeRef.current = now;
+
+        if (isDoubleTap && ann?.type === "text") {
+            // Double-tap on text = enter edit mode
+            setEditingAnnotationId(id);
+            setSelectedAnnotationId(id);
+            setIsDragging(false);
+            return;
+        }
+
+        // Single tap = select and start drag
+        if (editingAnnotationId === id) {
+            // Already editing, don't start drag
+            return;
+        }
+
+        setEditingAnnotationId(null); // Exit edit mode for any other
+        setSelectedAnnotationId(id);
         setIsDragging(true);
         setIsResizing(false);
-        setSelectedAnnotationId(id);
         setInteractionStart(coords);
-    }, []);
+    }, [annotations, editingAnnotationId]);
 
     // --- Resize logic ---
     const handleResizeStart = useCallback((e: React.MouseEvent | React.TouchEvent, id: string) => {
@@ -290,6 +315,7 @@ export function PdfEdit() {
 
         setIsResizing(true);
         setIsDragging(false);
+        setEditingAnnotationId(null);
         setSelectedAnnotationId(id);
         setInteractionStart(coords);
     }, []);
@@ -310,7 +336,6 @@ export function PdfEdit() {
         const dPctY = (dy / rect.height) * 100;
 
         if (isDragging) {
-            // Move annotation
             setAnnotations(prev => prev.map(ann => {
                 if (ann.id !== selectedAnnotationId) return ann;
                 return {
@@ -320,7 +345,6 @@ export function PdfEdit() {
                 };
             }));
         } else if (isResizing) {
-            // Resize annotation
             setAnnotations(prev => prev.map(ann => {
                 if (ann.id !== selectedAnnotationId) return ann;
 
@@ -368,6 +392,7 @@ export function PdfEdit() {
         setPages([]);
         setAnnotations([]);
         setSelectedAnnotationId(null);
+        setEditingAnnotationId(null);
         reset();
     }, [pages, reset]);
 
@@ -450,7 +475,7 @@ export function PdfEdit() {
                     {annotations.length > 0 && (
                         <Button
                             variant="secondary"
-                            onClick={() => { setAnnotations([]); setSelectedAnnotationId(null); }}
+                            onClick={() => { setAnnotations([]); setSelectedAnnotationId(null); setEditingAnnotationId(null); }}
                             className="h-8 text-xs px-3"
                         >
                             <Trash2 className="w-3.5 h-3.5 mr-1.5" />
@@ -493,6 +518,11 @@ export function PdfEdit() {
                         </button>
                     </div>
 
+                    {/* Hint for mobile users */}
+                    <p className="text-xs text-stone-400 sm:hidden text-center">
+                        Tap to select · Double-tap text to edit · Drag to move
+                    </p>
+
                     {/* Canvas – touch-none prevents mobile scroll */}
                     <div className="flex justify-center w-full">
                         <div
@@ -508,7 +538,7 @@ export function PdfEdit() {
                             onMouseLeave={handlePointerEnd}
                             onTouchMove={handlePointerMove}
                             onTouchEnd={handlePointerEnd}
-                            onClick={() => setSelectedAnnotationId(null)}
+                            onClick={() => { setSelectedAnnotationId(null); setEditingAnnotationId(null); }}
                         >
                             <img
                                 src={currentPage.preview}
@@ -520,10 +550,12 @@ export function PdfEdit() {
                             {/* Annotations */}
                             {pageAnnotations.map(ann => {
                                 const isSelected = selectedAnnotationId === ann.id;
+                                const isEditing = editingAnnotationId === ann.id;
                                 return (
                                     <div
                                         key={ann.id}
-                                        className={`absolute group cursor-move flex items-center justify-center
+                                        className={`absolute group flex items-center justify-center touch-none
+                                            ${isEditing ? "cursor-text" : "cursor-move"}
                                             ${isSelected ? "ring-2 ring-blue-500 z-10" : "hover:ring-1 hover:ring-blue-300"}
                                         `}
                                         style={{
@@ -535,33 +567,41 @@ export function PdfEdit() {
                                             maxWidth: "100%",
                                             maxHeight: "100%",
                                         }}
-                                        onMouseDown={(e) => handleDragStart(e, ann.id)}
-                                        onTouchStart={(e) => handleDragStart(e, ann.id)}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedAnnotationId(ann.id);
-                                        }}
+                                        onMouseDown={(e) => handleAnnotationPointerDown(e, ann.id)}
+                                        onTouchStart={(e) => handleAnnotationPointerDown(e, ann.id)}
+                                        onClick={(e) => e.stopPropagation()}
                                     >
                                         {ann.type === "text" ? (
-                                            isSelected ? (
+                                            isEditing ? (
+                                                // Edit mode: show input (only on double-tap)
                                                 <input
                                                     autoFocus
                                                     value={ann.text}
                                                     onChange={(e) => updateText(ann.id, e.target.value)}
-                                                    className="bg-transparent border-none outline-none text-center min-w-[50px]"
+                                                    className="bg-white/80 border border-blue-400 rounded px-1 outline-none text-center min-w-[60px]"
                                                     style={{
                                                         fontSize: `${(ann.size || 12) * 1.5}px`,
                                                         color: ann.color
                                                     }}
                                                     onMouseDown={(e) => e.stopPropagation()}
                                                     onTouchStart={(e) => e.stopPropagation()}
+                                                    onBlur={() => setEditingAnnotationId(null)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") {
+                                                            setEditingAnnotationId(null);
+                                                        }
+                                                    }}
                                                 />
                                             ) : (
-                                                <span style={{
-                                                    fontSize: `${(ann.size || 12) * 1.5}px`,
-                                                    color: ann.color,
-                                                    whiteSpace: "nowrap"
-                                                }}>
+                                                // Display mode: just show text (draggable)
+                                                <span
+                                                    className="pointer-events-none"
+                                                    style={{
+                                                        fontSize: `${(ann.size || 12) * 1.5}px`,
+                                                        color: ann.color,
+                                                        whiteSpace: "nowrap",
+                                                    }}
+                                                >
                                                     {ann.text}
                                                 </span>
                                             )
@@ -588,13 +628,20 @@ export function PdfEdit() {
                                         )}
 
                                         {/* Resize handle (bottom-right corner) */}
-                                        {isSelected && (
+                                        {isSelected && !isEditing && (
                                             <div
-                                                className="absolute -bottom-2 -right-2 w-5 h-5 bg-blue-500 rounded-sm cursor-se-resize z-20 flex items-center justify-center shadow-md hover:bg-blue-600 transition-colors"
+                                                className="absolute -bottom-2 -right-2 w-5 h-5 bg-blue-500 rounded-sm cursor-se-resize z-20 flex items-center justify-center shadow-md hover:bg-blue-600 transition-colors touch-none"
                                                 onMouseDown={(e) => handleResizeStart(e, ann.id)}
                                                 onTouchStart={(e) => handleResizeStart(e, ann.id)}
                                             >
                                                 <Move className="w-3 h-3 text-white rotate-45" />
+                                            </div>
+                                        )}
+
+                                        {/* Edit text hint on selected text annotations */}
+                                        {isSelected && ann.type === "text" && !isEditing && (
+                                            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-stone-800 text-white text-[10px] whitespace-nowrap z-20">
+                                                Double-tap to edit
                                             </div>
                                         )}
                                     </div>
@@ -622,7 +669,7 @@ export function PdfEdit() {
                 return (
                     <div className="p-4 bg-stone-50 rounded-lg border border-stone-200">
                         <h4 className="text-sm font-medium text-stone-700 mb-3">Text Properties</h4>
-                        <div className="flex gap-4 items-center">
+                        <div className="flex flex-wrap gap-4 items-center">
                             <label className="text-xs text-stone-500 flex items-center gap-2">
                                 Color
                                 <input
@@ -651,6 +698,13 @@ export function PdfEdit() {
                                     className="w-16 p-1 text-sm border rounded border-stone-300"
                                 />
                             </label>
+                            {/* Edit text button for mobile */}
+                            <button
+                                onClick={() => setEditingAnnotationId(ann.id)}
+                                className="text-xs text-blue-600 hover:text-blue-700 underline sm:hidden"
+                            >
+                                Edit text
+                            </button>
                         </div>
                     </div>
                 );

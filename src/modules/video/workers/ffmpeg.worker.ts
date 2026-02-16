@@ -142,28 +142,38 @@ const api: FFmpegWorkerAPI = {
     });
 
     // ── Try multi-threaded first, fall back to single-threaded ────────────
-    // Multi-threaded core files are served from public/ffmpeg/ (same-origin).
-    // This avoids blob URL issues where core-mt can't spawn nested workers.
-    try {
-      const mtBase = "/ffmpeg";
+    // Multi-threaded requires SharedArrayBuffer, which many mobile browsers
+    // and cross-origin-isolated contexts lack. Skip MT entirely when unsupported
+    // to avoid "Cannot find module" errors from the WASM core.
+    const canTryMT =
+      typeof SharedArrayBuffer !== "undefined" &&
+      typeof crossOriginIsolated !== "undefined" &&
+      crossOriginIsolated;
 
-      await ffmpeg.load({
-        coreURL: `${mtBase}/ffmpeg-core.js`,
-        wasmURL: `${mtBase}/ffmpeg-core.wasm`,
-        workerURL: `${mtBase}/ffmpeg-core.worker.js`,
-      });
-      multiThreaded = true;
-      loaded = true;
-      console.log("[FFmpeg] Loaded multi-threaded core ✓");
-      return;
-    } catch (mtErr) {
-      console.warn("[FFmpeg] Multi-threaded load failed, trying single-threaded:", mtErr);
-      // Reset FFmpeg instance for the retry
-      ffmpeg.terminate();
-      ffmpeg = new FFmpeg();
-      ffmpeg.on("log", ({ message }) => {
-        console.log("[FFmpeg]", message);
-      });
+    if (canTryMT) {
+      try {
+        const mtBase = "/ffmpeg";
+
+        await ffmpeg.load({
+          coreURL: `${mtBase}/ffmpeg-core.js`,
+          wasmURL: `${mtBase}/ffmpeg-core.wasm`,
+          workerURL: `${mtBase}/ffmpeg-core.worker.js`,
+        });
+        multiThreaded = true;
+        loaded = true;
+        console.log("[FFmpeg] Loaded multi-threaded core ✓");
+        return;
+      } catch (mtErr) {
+        console.info("[FFmpeg] Multi-threaded core unavailable, using single-threaded fallback");
+        // Reset FFmpeg instance for the retry
+        ffmpeg.terminate();
+        ffmpeg = new FFmpeg();
+        ffmpeg.on("log", ({ message }) => {
+          console.log("[FFmpeg]", message);
+        });
+      }
+    } else {
+      console.info("[FFmpeg] SharedArrayBuffer not available — using single-threaded core");
     }
 
     // ── Single-threaded fallback ──────────────────────────────────────────

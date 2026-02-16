@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { FileText, Loader2, AlertCircle, X, Download, RotateCcw } from "lucide-react";
+import { FileText, Loader2, AlertCircle, X, Download, RotateCcw, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import {
     FileUploader,
     Button,
@@ -79,7 +79,7 @@ async function loadPdfjs(): Promise<PDFJSLib> {
 interface PageItem {
     id: string;
     fileId: string;
-    pageIndex: number; // 0-based index in original file
+    pageIndex: number;
     preview: string;
     sourceName: string;
 }
@@ -107,7 +107,16 @@ export function PdfMerge() {
     const [pages, setPages] = useState<PageItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [previewError, setPreviewError] = useState<string | null>(null);
+
+    // Desktop HTML5 drag
     const [draggedId, setDraggedId] = useState<string | null>(null);
+
+    // Mobile touch-based drag
+    const [touchDragIndex, setTouchDragIndex] = useState<number | null>(null);
+    const touchStartY = useRef<number>(0);
+    const touchCurrentY = useRef<number>(0);
+    const [touchOffset, setTouchOffset] = useState(0);
+    const gridRef = useRef<HTMLDivElement>(null);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -193,6 +202,7 @@ export function PdfMerge() {
         [files, reset]
     );
 
+    // --- Desktop HTML5 Drag ---
     const handleDragStart = useCallback((id: string) => {
         setDraggedId(id);
     }, []);
@@ -218,6 +228,87 @@ export function PdfMerge() {
 
     const handleDragEnd = useCallback(() => {
         setDraggedId(null);
+    }, []);
+
+    // --- Mobile Touch Drag (long-press + drag to reorder) ---
+    const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleTouchStart = useCallback((e: React.TouchEvent, idx: number) => {
+        const touch = e.touches[0];
+        touchStartY.current = touch.clientY;
+        touchCurrentY.current = touch.clientY;
+
+        // Long press (300ms) to initiate drag
+        touchTimerRef.current = setTimeout(() => {
+            setTouchDragIndex(idx);
+            setTouchOffset(0);
+            // Small haptic-like visual feedback
+        }, 300);
+    }, []);
+
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        touchCurrentY.current = touch.clientY;
+
+        // If we haven't started dragging yet and moved too much, cancel long press
+        if (touchDragIndex === null && touchTimerRef.current) {
+            const dy = Math.abs(touch.clientY - touchStartY.current);
+            if (dy > 10) {
+                clearTimeout(touchTimerRef.current);
+                touchTimerRef.current = null;
+            }
+            return;
+        }
+
+        if (touchDragIndex === null) return;
+        e.preventDefault(); // Prevent scrolling while dragging
+
+        const dy = touch.clientY - touchStartY.current;
+        setTouchOffset(dy);
+
+        // Calculate which item we're hovering over
+        if (!gridRef.current) return;
+        const cards = gridRef.current.querySelectorAll("[data-page-idx]");
+        for (const card of Array.from(cards)) {
+            const rect = card.getBoundingClientRect();
+            if (touch.clientY >= rect.top && touch.clientY <= rect.bottom &&
+                touch.clientX >= rect.left && touch.clientX <= rect.right) {
+                const targetIdx = Number(card.getAttribute("data-page-idx"));
+                if (!isNaN(targetIdx) && targetIdx !== touchDragIndex) {
+                    // Swap
+                    setPages(prev => {
+                        const items = [...prev];
+                        const [dragged] = items.splice(touchDragIndex, 1);
+                        items.splice(targetIdx, 0, dragged);
+                        return items;
+                    });
+                    setTouchDragIndex(targetIdx);
+                    touchStartY.current = touch.clientY;
+                    setTouchOffset(0);
+                }
+                break;
+            }
+        }
+    }, [touchDragIndex]);
+
+    const handleTouchEnd = useCallback(() => {
+        if (touchTimerRef.current) {
+            clearTimeout(touchTimerRef.current);
+            touchTimerRef.current = null;
+        }
+        setTouchDragIndex(null);
+        setTouchOffset(0);
+    }, []);
+
+    // --- Move buttons (mobile-friendly alternative) ---
+    const movePage = useCallback((idx: number, direction: "up" | "down") => {
+        setPages(prev => {
+            const items = [...prev];
+            const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+            if (targetIdx < 0 || targetIdx >= items.length) return prev;
+            [items[idx], items[targetIdx]] = [items[targetIdx], items[idx]];
+            return items;
+        });
     }, []);
 
     const handleReset = useCallback(() => {
@@ -333,31 +424,51 @@ export function PdfMerge() {
             {!isLoading && pages.length > 0 && (
                 <div className="space-y-2">
                     <p className="text-xs text-stone-400">
-                        {pages.length} page{pages.length !== 1 ? "s" : ""} · Drag to reorder
+                        {pages.length} page{pages.length !== 1 ? "s" : ""} · <span className="hidden sm:inline">Drag to reorder</span><span className="sm:hidden">Use arrows to reorder</span>
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    <div
+                        ref={gridRef}
+                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchCancel={handleTouchEnd}
+                    >
                         {pages.map((page, idx) => {
                             const fileColor = files.find(f => f.id === page.fileId)?.color || "bg-gray-100";
+                            const isTouchDragging = touchDragIndex === idx;
                             return (
                                 <div
                                     key={page.id}
+                                    data-page-idx={idx}
+                                    // Desktop HTML5 drag
                                     draggable={!isProcessing}
                                     onDragStart={() => handleDragStart(page.id)}
                                     onDragOver={(e) => handleDragOver(e, page.id)}
                                     onDragEnd={handleDragEnd}
+                                    // Mobile touch drag
+                                    onTouchStart={(e) => handleTouchStart(e, idx)}
                                     className={`
-                                        relative group rounded-lg overflow-hidden border-2 bg-white cursor-move transition-all
+                                        relative group rounded-lg overflow-hidden border-2 bg-white transition-all
                                         ${draggedId === page.id
                                             ? "opacity-50 scale-95 border-stone-400"
-                                            : "border-stone-200 hover:border-stone-400 shadow-sm"
+                                            : isTouchDragging
+                                                ? "opacity-75 scale-105 border-blue-400 shadow-lg z-20"
+                                                : "border-stone-200 hover:border-stone-400 shadow-sm"
                                         }
+                                        ${!isProcessing ? "cursor-move" : ""}
                                     `}
+                                    style={isTouchDragging ? {
+                                        transform: `scale(1.05) translateY(${touchOffset}px)`,
+                                        zIndex: 50,
+                                        position: "relative",
+                                    } : undefined}
                                 >
                                     <div className="aspect-[3/4]">
                                         <img
                                             src={page.preview}
                                             alt={`Page ${idx + 1}`}
-                                            className="w-full h-full object-contain bg-white"
+                                            className="w-full h-full object-contain bg-white pointer-events-none"
+                                            draggable={false}
                                         />
                                     </div>
 
@@ -371,13 +482,31 @@ export function PdfMerge() {
                                         {idx + 1}
                                     </div>
 
-                                    {/* Remove button */}
+                                    {/* Mobile reorder buttons (always visible on touch devices) */}
+                                    <div className="absolute bottom-1 right-1 flex flex-col gap-0.5 sm:hidden">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); movePage(idx, "up"); }}
+                                            disabled={idx === 0}
+                                            className="p-1 rounded bg-white/90 text-stone-500 disabled:opacity-30 shadow-sm active:bg-stone-100"
+                                        >
+                                            <ChevronUp className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); movePage(idx, "down"); }}
+                                            disabled={idx === pages.length - 1}
+                                            className="p-1 rounded bg-white/90 text-stone-500 disabled:opacity-30 shadow-sm active:bg-stone-100"
+                                        >
+                                            <ChevronDown className="w-3 h-3" />
+                                        </button>
+                                    </div>
+
+                                    {/* Remove button (visible on hover for desktop) */}
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             removePage(page.id);
                                         }}
-                                        className="absolute top-7 right-1 p-1 rounded-full bg-white/80 text-stone-400 opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-500 transition-all"
+                                        className="absolute top-7 right-1 p-1 rounded-full bg-white/80 text-stone-400 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-red-100 hover:text-red-500 transition-all"
                                     >
                                         <X className="w-3 h-3" />
                                     </button>
