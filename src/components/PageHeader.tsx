@@ -16,7 +16,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, description, backHref }: PageHeaderProps) {
   return (
     <header className="sticky top-0 z-10 bg-stone-50/40 backdrop-blur-sm border-b border-stone-200/60">
-      <div className="px-6 py-4 lg:py-5 max-w-5xl mx-auto">
+    <div className="page-content px-6 py-4 lg:py-5">
         <div className="flex items-center gap-4">
           {backHref && (
             <Link

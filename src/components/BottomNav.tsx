@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Video, FileText } from "lucide-react";
+import { Home, Video, FileText, FileCode } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +8,7 @@ const navItems = [
   { href: "/", icon: Home, label: "Home" },
   { href: "/video", icon: Video, label: "Video" },
   { href: "/pdf", icon: FileText, label: "PDF" },
+  { href: "/markdown", icon: FileCode, label: "Markdown" },
 ];
 
 /**

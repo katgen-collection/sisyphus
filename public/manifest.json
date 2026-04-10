@@ -37,6 +37,13 @@
       "description": "Compress, convert, and manipulate PDFs",
       "url": "/pdf",
       "icons": [{ "src": "/assets/logo/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Markdown Tools",
+      "short_name": "Markdown",
+      "description": "Edit, preview, and export Markdown as PDF",
+      "url": "/markdown",
+      "icons": [{ "src": "/assets/logo/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

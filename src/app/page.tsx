@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, FileText, Shield, Zap, HardDrive } from "lucide-react";
+import { Video, FileText, FileCode, Shield, Zap, HardDrive } from "lucide-react";
 import { ToolCard, SpinningLogo } from "@/components";
 
 export default function Home() {
@@ -52,6 +52,12 @@ export default function Home() {
               icon={FileText}
               title="PDF Tools"
               description="Compress, merge, and extract pages"
+            />
+            <ToolCard
+              href="/markdown"
+              icon={FileCode}
+              title="Markdown Tools"
+              description="Edit, preview, and export markdown as PDF"
             />
           </div>
         </div>

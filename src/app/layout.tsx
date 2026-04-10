@@ -75,7 +75,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-sidebar="expanded">
       <head>
         <link rel="apple-touch-icon" href="/assets/logo/icon-192.png" />
       </head>
@@ -87,8 +87,8 @@ export default function RootLayout({
         {/* Desktop Sidebar */}
         <Sidebar />
         
-        {/* Main content area - shifts right on desktop */}
-        <main className="pb-24 lg:pb-8 lg:ml-64 min-h-screen">
+        {/* Main content area - margin driven by data-sidebar CSS rules */}
+        <main className="pb-24 lg:pb-8 min-h-screen">
           {children}
         </main>
         

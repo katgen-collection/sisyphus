@@ -13,13 +13,17 @@
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "comlink": "^4.4.2",
+    "highlight.js": "^11.11.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.563.0",
     "next": "16.1.4",
     "pdf-lib": "^1.17.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-pdf": "^10.3.0"
+    "react-markdown": "^10.1.0",
+    "react-pdf": "^10.3.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
