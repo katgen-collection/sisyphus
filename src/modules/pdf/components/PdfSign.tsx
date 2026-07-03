@@ -22,6 +22,7 @@ import { usePdfWorker } from "../hooks/usePdfWorker";
 import { LoadingSpinner } from "@/components";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { loadPdfjs, type PDFDocumentProxy } from "../lib/pdfjs";
+import { PdfLazyPage } from "./PdfLazyPage";
 
 /** Signature placement information */
 interface SignaturePlacement {
@@ -32,14 +33,6 @@ interface SignaturePlacement {
   width: number; // percentage of page width
   height: number; // percentage of page height
   imageDataUrl: string;
-}
-
-/** Page preview data */
-interface PagePreview {
-  pageIndex: number;
-  preview: string;
-  width: number;
-  height: number;
 }
 
 type Step = "upload" | "select-page" | "place-signature" | "draw" | "review";
@@ -53,7 +46,10 @@ export function PdfSign() {
   // Core state
   const [file, setFile] = useState<AcceptedFile | null>(null);
   const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
-  const [pages, setPages] = useState<PagePreview[]>([]);
+  const [numPages, setNumPages] = useState(0);
+  // Real dimensions of the currently-selected page, fetched on demand so the
+  // placement surface has the right aspect ratio without rasterizing anything.
+  const [pageDims, setPageDims] = useState<{ width: number; height: number } | null>(null);
   const [signatures, setSignatures] = useState<SignaturePlacement[]>([]);
   
   // UI state
@@ -79,9 +75,28 @@ export function PdfSign() {
   useEffect(() => {
     return () => {
       if (pdfDocRef.current) pdfDocRef.current.destroy();
-      pages.forEach((p) => URL.revokeObjectURL(p.preview));
     };
   }, []);
+
+  // Fetch the selected page's real dimensions when placing a signature, so the
+  // surface's aspect ratio matches the page (percentage math depends on it).
+  useEffect(() => {
+    const doc = pdfDocRef.current;
+    if (!doc || step !== "place-signature") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const page = await doc.getPage(selectedPageIndex + 1);
+        const viewport = page.getViewport({ scale: 1 });
+        if (!cancelled) setPageDims({ width: viewport.width, height: viewport.height });
+      } catch {
+        // Leave prior dims; the surface falls back to a default aspect.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [step, selectedPageIndex]);
 
   const handleFilesAccepted = useCallback(
     async (files: AcceptedFile[]) => {
@@ -98,8 +113,8 @@ export function PdfSign() {
         pdfDocRef.current = null;
       }
 
-      pages.forEach((p) => URL.revokeObjectURL(p.preview));
-      setPages([]);
+      setNumPages(0);
+      setPageDims(null);
 
       if (!newFile) {
         setStep("upload");
@@ -111,42 +126,12 @@ export function PdfSign() {
         const pdfjs = await loadPdfjs();
         const arrayBuffer = await newFile.file.arrayBuffer();
         setPdfData(new Uint8Array(arrayBuffer));
-        
+
         const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer }).promise;
         pdfDocRef.current = pdfDoc;
 
-        const nextPages: PagePreview[] = [];
-        const scale = 1.5;
-
-        for (let i = 0; i < pdfDoc.numPages; i++) {
-          const pageNumber = i + 1;
-          const page = await pdfDoc.getPage(pageNumber);
-          const viewport = page.getViewport({ scale });
-
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
-          if (!context) throw new Error("Canvas context not available");
-
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-
-          await page.render({ canvasContext: context, viewport, canvas }).promise;
-
-          const blob = await new Promise<Blob | null>((resolve) => {
-            canvas.toBlob(resolve, "image/png", 0.9);
-          });
-
-          if (!blob) continue;
-          const url = URL.createObjectURL(blob);
-          nextPages.push({
-            pageIndex: i,
-            preview: url,
-            width: viewport.width,
-            height: viewport.height,
-          });
-        }
-
-        setPages(nextPages);
+        // Pages rasterize lazily (see PdfLazyPage) — nothing is rendered up front.
+        setNumPages(pdfDoc.numPages);
         setStep("select-page");
       } catch (err) {
         setPreviewError(err instanceof Error ? err.message : "Failed to load PDF");
@@ -155,7 +140,7 @@ export function PdfSign() {
         setIsLoading(false);
       }
     },
-    [pages, reset]
+    [reset]
   );
 
   // Get coordinates from mouse/touch event
@@ -267,8 +252,7 @@ export function PdfSign() {
       case "select-page":
         setFile(null);
         setPdfData(null);
-        pages.forEach((p) => URL.revokeObjectURL(p.preview));
-        setPages([]);
+        setNumPages(0);
         setSignatures([]);
         setStep("upload");
         break;
@@ -284,10 +268,9 @@ export function PdfSign() {
         setStep("select-page");
         break;
     }
-  }, [step, pages]);
+  }, [step]);
 
   const isProcessing = state === "processing";
-  const currentPage = pages[selectedPageIndex];
   const pageSignatures = signatures.filter((s) => s.pageIndex === selectedPageIndex);
 
   return (
@@ -328,20 +311,20 @@ export function PdfSign() {
       )}
 
       {/* Page selection step */}
-      {step === "select-page" && pages.length > 0 && (
+      {step === "select-page" && numPages > 0 && (
         <div className="space-y-4">
           {/* File info */}
           <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
             <FileText className="w-5 h-5 text-stone-500" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-stone-700 truncate">{file?.file.name}</p>
-              <p className="text-xs text-stone-400">{pages.length} page{pages.length !== 1 ? "s" : ""}</p>
+              <p className="text-xs text-stone-400">{numPages} page{numPages !== 1 ? "s" : ""}</p>
             </div>
           </div>
 
           {/* Page grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {pages.map((page, idx) => {
+            {Array.from({ length: numPages }, (_, idx) => {
               const hasSignatures = signatures.some((s) => s.pageIndex === idx);
               return (
                 <button
@@ -358,10 +341,12 @@ export function PdfSign() {
                     }
                   `}
                 >
-                  <img
-                    src={page.preview}
+                  <PdfLazyPage
+                    doc={pdfDocRef.current}
+                    pageNumber={idx + 1}
+                    scale={0.6}
                     alt={`Page ${idx + 1}`}
-                    className="w-full h-full object-contain bg-white"
+                    className="w-full h-full bg-white"
                   />
                   <div className="absolute bottom-1 left-1 px-2 py-0.5 rounded bg-stone-900/70 text-white text-xs">
                     {idx + 1}
@@ -397,7 +382,7 @@ export function PdfSign() {
       )}
 
       {/* Signature placement step */}
-      {step === "place-signature" && currentPage && (
+      {step === "place-signature" && numPages > 0 && (
         <div className="space-y-4">
           {/* Page navigation */}
           <div className="flex items-center justify-between">
@@ -409,11 +394,11 @@ export function PdfSign() {
               <ChevronLeft className="w-5 h-5" />
             </button>
             <span className="text-sm text-stone-500">
-              Page {selectedPageIndex + 1} of {pages.length}
+              Page {selectedPageIndex + 1} of {numPages}
             </span>
             <button
-              onClick={() => setSelectedPageIndex((i) => Math.min(pages.length - 1, i + 1))}
-              disabled={selectedPageIndex === pages.length - 1}
+              onClick={() => setSelectedPageIndex((i) => Math.min(numPages - 1, i + 1))}
+              disabled={selectedPageIndex === numPages - 1}
               className="p-2 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-5 h-5" />
@@ -427,8 +412,8 @@ export function PdfSign() {
               className="relative bg-white rounded-lg shadow-lg overflow-hidden select-none touch-none"
               style={{
                 width: "100%",
-                maxWidth: Math.min(600, currentPage.width),
-                aspectRatio: `${currentPage.width} / ${currentPage.height}`,
+                maxWidth: Math.min(600, pageDims?.width ?? 600),
+                aspectRatio: `${pageDims?.width ?? 210} / ${pageDims?.height ?? 297}`,
               }}
               onMouseDown={handlePlacementStart}
               onMouseMove={handlePlacementMove}
@@ -438,11 +423,13 @@ export function PdfSign() {
               onTouchMove={handlePlacementMove}
               onTouchEnd={handlePlacementEnd}
             >
-              <img
-                src={currentPage.preview}
+              <PdfLazyPage
+                doc={pdfDocRef.current}
+                pageNumber={selectedPageIndex + 1}
+                scale={1.5}
+                eager
                 alt={`Page ${selectedPageIndex + 1}`}
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-                draggable={false}
+                className="absolute inset-0 w-full h-full pointer-events-none"
               />
 
             {/* Existing signatures on this page */}
@@ -588,7 +575,7 @@ export function PdfSign() {
 
           {/* Summary of signed pages */}
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {pages.map((page, idx) => {
+            {Array.from({ length: numPages }, (_, idx) => {
               const sigs = signatures.filter((s) => s.pageIndex === idx);
               if (sigs.length === 0) return null;
               return (
@@ -596,10 +583,12 @@ export function PdfSign() {
                   key={idx}
                   className="relative aspect-3/4 rounded-lg overflow-hidden border-2 border-emerald-300"
                 >
-                  <img
-                    src={page.preview}
+                  <PdfLazyPage
+                    doc={pdfDocRef.current}
+                    pageNumber={idx + 1}
+                    scale={0.6}
                     alt={`Page ${idx + 1}`}
-                    className="w-full h-full object-contain bg-white"
+                    className="w-full h-full bg-white"
                   />
                   <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-emerald-500 text-white text-xs">
                     {sigs.length} sig{sigs.length !== 1 ? "s" : ""}

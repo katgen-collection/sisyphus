@@ -12,12 +12,12 @@ import { usePdfWorker } from "../hooks/usePdfWorker";
 import { LoadingSpinner } from "@/components";
 import { MergePageSource } from "../types";
 import { loadPdfjs, type PDFDocumentProxy } from "../lib/pdfjs";
+import { PdfLazyPage } from "./PdfLazyPage";
 
 interface PageItem {
     id: string;
     fileId: string;
     pageIndex: number;
-    preview: string;
     sourceName: string;
 }
 
@@ -61,7 +61,6 @@ export function PdfMerge() {
             files.forEach((f) => {
                 if (f.pdfDoc) f.pdfDoc.destroy();
             });
-            pages.forEach((p) => URL.revokeObjectURL(p.preview));
         };
     }, []);
 
@@ -95,34 +94,14 @@ export function PdfMerge() {
                         color: colorClass,
                     });
 
-                    const scale = 0.5;
-
+                    // Page thumbnails rasterize lazily (see PdfLazyPage) — the
+                    // doc proxy stays alive on the SourceFile for on-demand render.
                     for (let j = 0; j < pdfDoc.numPages; j++) {
                         const pageNumber = j + 1;
-                        const page = await pdfDoc.getPage(pageNumber);
-                        const viewport = page.getViewport({ scale });
-
-                        const canvas = document.createElement("canvas");
-                        const context = canvas.getContext("2d");
-                        if (!context) throw new Error("Canvas context not available");
-
-                        canvas.width = viewport.width;
-                        canvas.height = viewport.height;
-
-                        await page.render({ canvasContext: context, viewport, canvas }).promise;
-
-                        const blob = await new Promise<Blob | null>((resolve) => {
-                            canvas.toBlob(resolve, "image/jpeg", 0.7);
-                        });
-
-                        if (!blob) continue;
-                        const url = URL.createObjectURL(blob);
-
                         newPages.push({
                             id: `${fileId}-${pageNumber}`,
                             fileId: fileId,
                             pageIndex: j,
-                            preview: url,
                             sourceName: file.file.name,
                         });
                     }
@@ -250,19 +229,14 @@ export function PdfMerge() {
 
     const handleReset = useCallback(() => {
         files.forEach(f => f.pdfDoc?.destroy());
-        pages.forEach(p => URL.revokeObjectURL(p.preview));
         setFiles([]);
         setPages([]);
         setPreviewError(null);
         reset();
-    }, [files, pages, reset]);
+    }, [files, reset]);
 
     const removePage = useCallback((pageId: string) => {
-        setPages(prev => {
-            const target = prev.find(p => p.id === pageId);
-            if (target) URL.revokeObjectURL(target.preview);
-            return prev.filter(p => p.id !== pageId);
-        });
+        setPages(prev => prev.filter(p => p.id !== pageId));
     }, []);
 
     const handleMerge = useCallback(async () => {
@@ -353,7 +327,7 @@ export function PdfMerge() {
             {/* Loading indicator */}
             {isLoading && (
                 <div className="flex items-center justify-center py-8">
-                    <LoadingSpinner size="md" text="Rendering previews..." />
+                    <LoadingSpinner size="md" text="Loading PDF..." />
                 </div>
             )}
 
@@ -371,7 +345,8 @@ export function PdfMerge() {
                         onTouchCancel={handleTouchEnd}
                     >
                         {pages.map((page, idx) => {
-                            const fileColor = files.find(f => f.id === page.fileId)?.color || "bg-gray-100";
+                            const sourceFile = files.find(f => f.id === page.fileId);
+                            const fileColor = sourceFile?.color || "bg-gray-100";
                             const isTouchDragging = touchDragIndex === idx;
                             return (
                                 <div
@@ -400,12 +375,13 @@ export function PdfMerge() {
                                         position: "relative",
                                     } : undefined}
                                 >
-                                    <div className="aspect-[3/4]">
-                                        <img
-                                            src={page.preview}
+                                    <div className="aspect-[3/4] pointer-events-none">
+                                        <PdfLazyPage
+                                            doc={sourceFile?.pdfDoc ?? null}
+                                            pageNumber={page.pageIndex + 1}
+                                            scale={0.5}
                                             alt={`Page ${idx + 1}`}
-                                            className="w-full h-full object-contain bg-white pointer-events-none"
-                                            draggable={false}
+                                            className="w-full h-full bg-white"
                                         />
                                     </div>
 

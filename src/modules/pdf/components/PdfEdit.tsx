@@ -24,20 +24,16 @@ import { usePdfWorker } from "../hooks/usePdfWorker";
 import { LoadingSpinner } from "@/components";
 import { PdfAnnotation, TextAnnotation, ImageAnnotation } from "../types";
 import { loadPdfjs, type PDFDocumentProxy } from "../lib/pdfjs";
-
-interface PagePreview {
-    pageIndex: number;
-    preview: string;
-    width: number;
-    height: number;
-}
+import { PdfLazyPage } from "./PdfLazyPage";
 
 export function PdfEdit() {
     const { state, progress, error, annotatePdf, reset } = usePdfWorker();
 
     const [file, setFile] = useState<AcceptedFile | null>(null);
     const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
-    const [pages, setPages] = useState<PagePreview[]>([]);
+    const [numPages, setNumPages] = useState(0);
+    // Real dimensions of the active page, fetched on demand for the canvas aspect.
+    const [pageDims, setPageDims] = useState<{ width: number; height: number } | null>(null);
     const [annotations, setAnnotations] = useState<PdfAnnotation[]>([]);
 
     const [isLoading, setIsLoading] = useState(false);
@@ -59,9 +55,28 @@ export function PdfEdit() {
     useEffect(() => {
         return () => {
             if (pdfDocRef.current) pdfDocRef.current.destroy();
-            pages.forEach((p) => URL.revokeObjectURL(p.preview));
         };
     }, []);
+
+    // Fetch the active page's real dimensions on demand so the canvas aspect
+    // ratio matches the page (annotation percentage math depends on it).
+    useEffect(() => {
+        const doc = pdfDocRef.current;
+        if (!doc || numPages === 0) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const page = await doc.getPage(selectedPageIndex + 1);
+                const viewport = page.getViewport({ scale: 1 });
+                if (!cancelled) setPageDims({ width: viewport.width, height: viewport.height });
+            } catch {
+                // Keep prior dims; canvas falls back to a default aspect.
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedPageIndex, numPages]);
 
     const handleFilesAccepted = useCallback(
         async (files: AcceptedFile[]) => {
@@ -79,8 +94,8 @@ export function PdfEdit() {
                 pdfDocRef.current = null;
             }
 
-            pages.forEach((p) => URL.revokeObjectURL(p.preview));
-            setPages([]);
+            setNumPages(0);
+            setPageDims(null);
 
             if (!newFile) return;
 
@@ -93,38 +108,8 @@ export function PdfEdit() {
                 const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer }).promise;
                 pdfDocRef.current = pdfDoc;
 
-                const nextPages: PagePreview[] = [];
-                const scale = 1.5;
-
-                for (let i = 0; i < pdfDoc.numPages; i++) {
-                    const pageNumber = i + 1;
-                    const page = await pdfDoc.getPage(pageNumber);
-                    const viewport = page.getViewport({ scale });
-
-                    const canvas = document.createElement("canvas");
-                    const context = canvas.getContext("2d");
-                    if (!context) throw new Error("Canvas context not available");
-
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height;
-
-                    await page.render({ canvasContext: context, viewport, canvas }).promise;
-
-                    const blob = await new Promise<Blob | null>((resolve) => {
-                        canvas.toBlob(resolve, "image/png", 0.9);
-                    });
-
-                    if (!blob) continue;
-                    const url = URL.createObjectURL(blob);
-                    nextPages.push({
-                        pageIndex: i,
-                        preview: url,
-                        width: viewport.width,
-                        height: viewport.height,
-                    });
-                }
-
-                setPages(nextPages);
+                // Pages rasterize lazily (see PdfLazyPage) — nothing rendered up front.
+                setNumPages(pdfDoc.numPages);
             } catch (err) {
                 setPreviewError(err instanceof Error ? err.message : "Failed to load PDF");
             } finally {
@@ -173,9 +158,8 @@ export function PdfEdit() {
 
             const img = new Image();
             img.onload = () => {
-                const page = pages[selectedPageIndex];
-                if (page) {
-                    const pageAspect = page.width / page.height;
+                if (pageDims) {
+                    const pageAspect = pageDims.width / pageDims.height;
                     const imgAspect = img.width / img.height;
                     newAnnotation.height = (20 * pageAspect) / imgAspect;
                 }
@@ -187,7 +171,7 @@ export function PdfEdit() {
             img.src = URL.createObjectURL(new Blob([arrayBuffer]));
         };
         reader.readAsArrayBuffer(imgFile);
-    }, [pages, selectedPageIndex]);
+    }, [pageDims, selectedPageIndex]);
 
     const updateText = useCallback((id: string, text: string) => {
         setAnnotations(prev => prev.map(ann =>
@@ -326,15 +310,14 @@ export function PdfEdit() {
     const handleBack = useCallback(() => {
         setFile(null);
         setPdfData(null);
-        pages.forEach((p) => URL.revokeObjectURL(p.preview));
-        setPages([]);
+        setNumPages(0);
+        setPageDims(null);
         setAnnotations([]);
         setSelectedAnnotationId(null);
         setEditingAnnotationId(null);
         reset();
-    }, [pages, reset]);
+    }, [reset]);
 
-    const currentPage = pages[selectedPageIndex];
     const pageAnnotations = annotations.filter(a => a.pageIndex === selectedPageIndex);
     const isProcessing = state === "processing";
 
@@ -377,7 +360,7 @@ export function PdfEdit() {
                 <FileText className="w-5 h-5 text-stone-500" />
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-700 truncate">{file?.file.name}</p>
-                    <p className="text-xs text-stone-400">{pages.length} page{pages.length !== 1 ? "s" : ""}</p>
+                    <p className="text-xs text-stone-400">{numPages} page{numPages !== 1 ? "s" : ""}</p>
                 </div>
             </div>
 
@@ -433,7 +416,7 @@ export function PdfEdit() {
             </div>
 
             {/* Editor canvas area */}
-            {currentPage && (
+            {numPages > 0 && (
                 <div className="flex flex-col items-center gap-4">
                     {/* Pagination */}
                     <div className="flex items-center justify-between w-full max-w-[600px]">
@@ -445,11 +428,11 @@ export function PdfEdit() {
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <span className="text-sm text-stone-500">
-                            Page {selectedPageIndex + 1} of {pages.length}
+                            Page {selectedPageIndex + 1} of {numPages}
                         </span>
                         <button
-                            onClick={() => setSelectedPageIndex(i => Math.min(pages.length - 1, i + 1))}
-                            disabled={selectedPageIndex === pages.length - 1}
+                            onClick={() => setSelectedPageIndex(i => Math.min(numPages - 1, i + 1))}
+                            disabled={selectedPageIndex === numPages - 1}
                             className="p-2 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             <ChevronRight className="w-5 h-5" />
@@ -468,8 +451,8 @@ export function PdfEdit() {
                             className="relative bg-white rounded-lg shadow-lg overflow-hidden select-none touch-none"
                             style={{
                                 width: "100%",
-                                maxWidth: Math.min(600, currentPage.width),
-                                aspectRatio: `${currentPage.width} / ${currentPage.height}`,
+                                maxWidth: Math.min(600, pageDims?.width ?? 600),
+                                aspectRatio: `${pageDims?.width ?? 210} / ${pageDims?.height ?? 297}`,
                             }}
                             onMouseMove={handlePointerMove}
                             onMouseUp={handlePointerEnd}
@@ -478,11 +461,13 @@ export function PdfEdit() {
                             onTouchEnd={handlePointerEnd}
                             onClick={() => { setSelectedAnnotationId(null); setEditingAnnotationId(null); }}
                         >
-                            <img
-                                src={currentPage.preview}
+                            <PdfLazyPage
+                                doc={pdfDocRef.current}
+                                pageNumber={selectedPageIndex + 1}
+                                scale={1.5}
+                                eager
                                 alt={`Page ${selectedPageIndex + 1}`}
-                                className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-                                draggable={false}
+                                className="absolute inset-0 w-full h-full pointer-events-none"
                             />
 
                             {/* Annotations */}
