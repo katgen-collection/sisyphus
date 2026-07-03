@@ -1,17 +1,11 @@
 "use client";
 
-import { Home, Video, FileText, FileCode, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-
-const navItems = [
-  { href: "/", icon: Home, label: "Home" },
-  { href: "/video", icon: Video, label: "Video" },
-  { href: "/pdf", icon: FileText, label: "PDF" },
-  { href: "/markdown", icon: FileCode, label: "Markdown" },
-];
+import { navItems } from "./navItems";
 
 const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
 // Same-tab-only notification; intentionally NOT the "storage" event, to avoid

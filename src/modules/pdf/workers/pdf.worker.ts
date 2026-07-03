@@ -9,11 +9,6 @@ import { encodeImage } from "./imageCodec";
  */
 
 // Inline types to avoid module resolution issues in worker context
-interface PdfOptimizeOptions {
-  removeMetadata?: boolean;
-  flattenForms?: boolean;
-}
-
 interface PdfResult {
   data: Uint8Array;
   filename: string;
@@ -82,50 +77,14 @@ interface MergePageSource {
 }
 
 interface PdfWorkerAPI {
-  optimize: (pdfData: Uint8Array, options?: PdfOptimizeOptions) => Promise<PdfResult>;
   compressImages: (pdfData: Uint8Array, level: PdfCompressionLevel) => Promise<PdfCompressResult>;
   imagesToPdf: (images: ImageInput[], outputName?: string) => Promise<PdfResult>;
-  reorderPages: (pdfData: Uint8Array, order: number[], outputName?: string) => Promise<PdfResult>;
   mergeDocuments: (sources: Uint8Array[], pages: MergePageSource[], outputName?: string) => Promise<PdfResult>;
   addSignatures: (pdfData: Uint8Array, signatures: SignatureInput[], outputName?: string) => Promise<PdfResult>;
   annotatePdf: (pdfData: Uint8Array, annotations: PdfAnnotation[], outputName?: string) => Promise<PdfResult>;
 }
 
 const api: PdfWorkerAPI = {
-  async optimize(
-    pdfData: Uint8Array,
-    options: PdfOptimizeOptions = {}
-  ): Promise<PdfResult> {
-    const { removeMetadata = true, flattenForms = true } = options;
-
-    const doc = await PDFDocument.load(pdfData, { ignoreEncryption: true });
-
-    if (removeMetadata) {
-      doc.setTitle("");
-      doc.setAuthor("");
-      doc.setSubject("");
-      doc.setKeywords([]);
-      doc.setProducer("");
-      doc.setCreator("");
-    }
-
-    if (flattenForms) {
-      const form = doc.getForm();
-      try {
-        form.flatten();
-      } catch {
-        // Form might not exist—ignore
-      }
-    }
-
-    const optimized = await doc.save();
-
-    return {
-      data: optimized,
-      filename: "optimized.pdf",
-    };
-  },
-
   async compressImages(
     pdfData: Uint8Array,
     level: PdfCompressionLevel = "balanced"
@@ -169,25 +128,6 @@ const api: PdfWorkerAPI = {
     }
 
     const pdfBytes = await doc.save();
-
-    return {
-      data: pdfBytes,
-      filename: outputName,
-    };
-  },
-
-  async reorderPages(
-    pdfData: Uint8Array,
-    order: number[],
-    outputName: string = "reordered.pdf"
-  ): Promise<PdfResult> {
-    const sourceDoc = await PDFDocument.load(pdfData, { ignoreEncryption: true });
-    const resultDoc = await PDFDocument.create();
-
-    const copied = await resultDoc.copyPages(sourceDoc, order);
-    copied.forEach((page) => resultDoc.addPage(page));
-
-    const pdfBytes = await resultDoc.save();
 
     return {
       data: pdfBytes,

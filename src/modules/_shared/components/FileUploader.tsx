@@ -15,6 +15,27 @@ interface FileUploaderProps {
 }
 
 /**
+ * Whether a file satisfies an `accept` string (".pdf", ".png,.jpg", "image/*",
+ * "application/pdf"). Browsers enforce `accept` in the file picker but NOT on
+ * drag-and-drop, so we re-check dropped files ourselves.
+ */
+function matchesAccept(file: File, accept: string): boolean {
+  const tokens = accept
+    .split(",")
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+  if (tokens.length === 0) return true;
+
+  const name = file.name.toLowerCase();
+  const type = file.type.toLowerCase();
+  return tokens.some((token) => {
+    if (token.startsWith(".")) return name.endsWith(token);
+    if (token.endsWith("/*")) return type.startsWith(token.slice(0, -1));
+    return type === token;
+  });
+}
+
+/**
  * Drag-and-drop file uploader.
  */
 export function FileUploader({
@@ -27,6 +48,7 @@ export function FileUploader({
   children,
 }: FileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [rejection, setRejection] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const processFiles = useCallback(
@@ -35,10 +57,15 @@ export function FileUploader({
 
       const maxBytes = maxSizeMB * 1024 * 1024;
       const accepted: AcceptedFile[] = [];
+      const rejected: string[] = [];
 
       for (const file of Array.from(fileList)) {
+        if (!matchesAccept(file, accept)) {
+          rejected.push(`"${file.name}" is not a supported file type`);
+          continue;
+        }
         if (file.size > maxBytes) {
-          console.warn(`File "${file.name}" exceeds ${maxSizeMB}MB limit`);
+          rejected.push(`"${file.name}" exceeds the ${maxSizeMB}MB limit`);
           continue;
         }
         accepted.push({
@@ -47,11 +74,13 @@ export function FileUploader({
         });
       }
 
+      setRejection(rejected.length > 0 ? rejected.join(" · ") : null);
+
       if (accepted.length > 0) {
         onFilesAccepted(multiple ? accepted : [accepted[0]]);
       }
     },
-    [maxSizeMB, multiple, onFilesAccepted]
+    [accept, maxSizeMB, multiple, onFilesAccepted]
   );
 
   const handleDrop = useCallback(
@@ -93,11 +122,17 @@ export function FileUploader({
   );
 
   return (
+    <div className="flex flex-col gap-2">
     <div
       role="button"
       tabIndex={disabled ? -1 : 0}
       onClick={handleClick}
-      onKeyDown={(e) => e.key === "Enter" && handleClick()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -137,6 +172,13 @@ export function FileUploader({
           </p>
         </>
       )}
+    </div>
+
+    {rejection && (
+      <p role="alert" className="text-sm text-red-600 px-1">
+        {rejection}
+      </p>
+    )}
     </div>
   );
 }

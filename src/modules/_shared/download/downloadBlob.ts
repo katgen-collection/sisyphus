@@ -6,8 +6,12 @@ export function downloadBlob(blob: Blob, filename: string): void {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
+  document.body.appendChild(anchor);
   anchor.click();
-  URL.revokeObjectURL(url);
+  anchor.remove();
+  // Defer revoke — revoking in the same tick can cancel the download in
+  // Firefox/Safari before the browser has started fetching the blob.
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 /**

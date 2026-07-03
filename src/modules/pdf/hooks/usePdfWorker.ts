@@ -3,7 +3,6 @@
 import { useCallback, useEffect } from "react";
 import { useProcessingState } from "@/modules/_shared";
 import type {
-  PdfOptimizeOptions,
   PdfResult,
   PdfCompressionLevel,
   PdfCompressResult,
@@ -17,12 +16,10 @@ interface UsePdfWorkerReturn {
   state: ReturnType<typeof useProcessingState>["state"];
   progress: number;
   error: string | null;
-  optimizePdf: (file: File, options?: PdfOptimizeOptions) => Promise<PdfResult | null>;
   compressPdf: (file: File, level: PdfCompressionLevel) => Promise<PdfCompressResult | null>;
   imagesToPdf: (
     images: Array<{ file: File; order: number }>
   ) => Promise<PdfResult | null>;
-  reorderPdf: (file: File, order: number[]) => Promise<PdfResult | null>;
   mergePdfs: (
     files: File[],
     pages: MergePageSource[]
@@ -61,33 +58,6 @@ export function usePdfWorker(): UsePdfWorkerReturn {
       terminatePdfWorker();
     };
   }, []);
-
-  const optimizePdf = useCallback(
-    async (file: File, options?: PdfOptimizeOptions): Promise<PdfResult | null> => {
-      setProcessing();
-      setProgress(10);
-
-      try {
-        const worker = getPdfWorker();
-        const pdfData = new Uint8Array(await file.arrayBuffer());
-        setProgress(30);
-
-        const result = await worker.optimize(pdfData, options);
-        setProgress(100);
-        setDone();
-
-        return {
-          ...result,
-          filename: file.name.replace(/\.pdf$/i, "_optimized.pdf"),
-        };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "PDF optimization failed";
-        setError(message);
-        return null;
-      }
-    },
-    [setProcessing, setProgress, setDone, setError]
-  );
 
   const compressPdf = useCallback(
     async (
@@ -146,31 +116,6 @@ export function usePdfWorker(): UsePdfWorkerReturn {
         return result;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to create PDF";
-        setError(message);
-        return null;
-      }
-    },
-    [setProcessing, setProgress, setDone, setError]
-  );
-
-  const reorderPdf = useCallback(
-    async (file: File, order: number[]): Promise<PdfResult | null> => {
-      setProcessing();
-      setProgress(10);
-
-      try {
-        const worker = getPdfWorker();
-        const pdfData = new Uint8Array(await file.arrayBuffer());
-        setProgress(40);
-
-        const outputName = file.name.replace(/\.pdf$/i, "_reordered.pdf");
-        const result = await worker.reorderPages(pdfData, order, outputName);
-        setProgress(100);
-        setDone();
-
-        return result;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to reorder PDF";
         setError(message);
         return null;
       }
@@ -307,10 +252,8 @@ export function usePdfWorker(): UsePdfWorkerReturn {
     state,
     progress,
     error,
-    optimizePdf,
     compressPdf,
     imagesToPdf,
-    reorderPdf,
     mergePdfs,
     signPdf,
     annotatePdf,

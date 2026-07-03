@@ -5,7 +5,9 @@ const withPWA = withPWAInit({
   dest: "public",
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
+  // Do NOT reload when connectivity returns — a full reload mid-job would
+  // destroy in-flight local processing (a large ffmpeg encode, a PDF merge).
+  reloadOnOnline: false,
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,

@@ -12,4 +12,4 @@ export { SignatureCanvas } from "./components/SignatureCanvas";
 export { usePdfWorker } from "./hooks/usePdfWorker";
 export { getPdfWorker, terminatePdfWorker } from "./workerClient";
 
-export type { ImageFile, PdfOptimizeOptions, PdfResult, PdfWorkerAPI, SignaturePlacement } from "./types";
+export type { PdfResult, PdfWorkerAPI, SignaturePlacement } from "./types";

@@ -2,8 +2,7 @@
 
 import { Columns2, FileText, PenLine, ZoomIn, ZoomOut, Download, Loader2 } from "lucide-react";
 import { Button } from "@/modules/_shared";
-
-type ViewMode = "split" | "editor" | "preview";
+import type { ViewMode } from "../types";
 
 interface EditorToolbarProps {
   viewMode: ViewMode;

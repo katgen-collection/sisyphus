@@ -8,3 +8,4 @@ export { OfflineIndicator } from "./OfflineIndicator";
 export { SpinningLogo } from "./SpinningLogo";
 export { LoadingSpinner } from "./LoadingSpinner";
 export { ToolCarousel, type ToolTab } from "./ToolCarousel";
+export { navItems, type NavItem } from "./navItems";

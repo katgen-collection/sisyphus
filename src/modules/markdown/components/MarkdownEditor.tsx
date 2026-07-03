@@ -5,8 +5,7 @@ import { PenLine } from "lucide-react";
 import { EditorToolbar } from "./EditorToolbar";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { usePdfExport } from "../hooks/usePdfExport";
-
-type ViewMode = "split" | "editor" | "preview";
+import type { ViewMode } from "../types";
 
 const DEFAULT_MARKDOWN = `# Welcome to Sisyphus Markdown Editor
 
@@ -98,10 +97,11 @@ export function MarkdownEditor() {
           </div>
         )}
 
-        {/* Preview pane */}
-        {(viewMode === "split" || viewMode === "preview") && (
+        {/* Preview pane — always mounted (even in Editor mode) so "Download PDF"
+            can read its rendered HTML; hidden, not unmounted, when editing. */}
+        <div className={viewMode === "editor" ? "hidden" : "contents"}>
           <MarkdownPreview ref={previewRef} markdown={markdown} zoom={zoom} />
-        )}
+        </div>
       </div>
     </div>
   );

@@ -11,66 +11,7 @@ import {
   type AcceptedFile,
 } from "@/modules/_shared";
 import { LoadingSpinner } from "@/components";
-
-// Type for pdfjs-dist (we'll import it dynamically)
-type PDFDocumentProxy = {
-  numPages: number;
-  getPage: (pageNumber: number) => Promise<PDFPageProxy>;
-  destroy: () => void;
-};
-
-type PDFPageProxy = {
-  getViewport: (params: { scale: number }) => { width: number; height: number };
-  render: (params: { canvasContext: CanvasRenderingContext2D; viewport: unknown; canvas: HTMLCanvasElement }) => { promise: Promise<void> };
-};
-
-type PDFJSLib = {
-  getDocument: (params: { data: ArrayBuffer }) => { promise: Promise<PDFDocumentProxy> };
-  GlobalWorkerOptions: { workerSrc: string };
-};
-
-// Lazy load PDF.js via CDN script to avoid bundler/runtime issues
-let pdfjsLib: PDFJSLib | null = null;
-let pdfjsLoading: Promise<PDFJSLib> | null = null;
-
-async function loadPdfjs(): Promise<PDFJSLib> {
-  if (typeof window === "undefined") {
-    throw new Error("PDF rendering is only available in the browser");
-  }
-  if (pdfjsLib) return pdfjsLib;
-  if (pdfjsLoading) return pdfjsLoading;
-
-  pdfjsLoading = new Promise<PDFJSLib>((resolve, reject) => {
-    const existing = (window as unknown as { pdfjsLib?: PDFJSLib }).pdfjsLib;
-    if (existing) {
-      existing.GlobalWorkerOptions.workerSrc =
-        "https://unpkg.com/pdfjs-dist@2.16.105/legacy/build/pdf.worker.min.js";
-      pdfjsLib = existing;
-      resolve(existing);
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/pdfjs-dist@2.16.105/legacy/build/pdf.min.js";
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    script.onload = () => {
-      const lib = (window as unknown as { pdfjsLib?: PDFJSLib }).pdfjsLib;
-      if (!lib) {
-        reject(new Error("PDF.js failed to load"));
-        return;
-      }
-      lib.GlobalWorkerOptions.workerSrc =
-        "https://unpkg.com/pdfjs-dist@2.16.105/legacy/build/pdf.worker.min.js";
-      pdfjsLib = lib;
-      resolve(lib);
-    };
-    script.onerror = () => reject(new Error("Failed to load PDF.js"));
-    document.head.appendChild(script);
-  });
-
-  return pdfjsLoading;
-}
+import { loadPdfjs, type PDFDocumentProxy } from "../lib/pdfjs";
 
 /**
  * PDF to Images converter using pdf-lib directly.

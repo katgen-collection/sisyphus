@@ -110,6 +110,12 @@ async function cachedToBlobURL(
     console.log(`[FFmpeg] Fetching & caching: ${url.split("/").pop()}`);
     const response = await fetch(url);
 
+    // Never cache an error response — a 404/HTML error page cached under the
+    // core URL would poison every subsequent load until storage is cleared.
+    if (!response.ok) {
+      throw new Error(`Fetch failed (${response.status}) for ${url}`);
+    }
+
     // Clone before consuming — a Response body can only be read once
     await cache.put(url, response.clone());
 
@@ -233,11 +239,16 @@ const api: FFmpegWorkerAPI = {
     const baseName = hasExt ? inputName.replace(/\.[^.]+$/, "") : inputName;
     const downloadName = `${baseName}_converted.${outputFormat}`;
 
-    if (onProgress) {
-      ffmpeg.on("progress", ({ progress, time }) => {
-        onProgress({ ratio: progress, time });
-      });
-    }
+    const progressHandler = ({
+      progress,
+      time,
+    }: {
+      progress: number;
+      time: number;
+    }) => {
+      onProgress?.({ ratio: progress, time });
+    };
+    if (onProgress) ffmpeg.on("progress", progressHandler);
 
     const logHandler = ({ message }: { message: string }) => {
       console.log("[FFmpeg]", message);
@@ -313,9 +324,7 @@ const api: FFmpegWorkerAPI = {
         mimeType: OUTPUT_MIME[outputFormat],
       };
     } finally {
-      if (onProgress) {
-        ffmpeg.off("progress", () => { });
-      }
+      if (onProgress) ffmpeg.off("progress", progressHandler);
       ffmpeg.off("log", logHandler);
     }
   },

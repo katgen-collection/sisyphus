@@ -1,17 +1,3 @@
-/** Image file with sorting order for images-to-PDF */
-export interface ImageFile {
-  file: File;
-  id: string;
-  order: number;
-  preview?: string;
-}
-
-/** PDF optimization options */
-export interface PdfOptimizeOptions {
-  removeMetadata?: boolean;
-  flattenForms?: boolean;
-}
-
 /** Result from PDF operations */
 export interface PdfResult {
   data: Uint8Array;
@@ -100,14 +86,6 @@ export interface MergePageSource {
 /** PDF worker API exposed via Comlink */
 export interface PdfWorkerAPI {
   /**
-   * Optimizes a PDF by removing metadata and flattening forms.
-   */
-  optimize: (
-    pdfData: Uint8Array,
-    options?: PdfOptimizeOptions
-  ) => Promise<PdfResult>;
-
-  /**
    * Compresses a PDF by recompressing its embedded images in place.
    * Text and vectors are preserved; unsupported images are left untouched.
    */
@@ -122,16 +100,6 @@ export interface PdfWorkerAPI {
    */
   imagesToPdf: (
     images: Array<{ data: Uint8Array; name: string; type: string }>,
-    outputName?: string
-  ) => Promise<PdfResult>;
-
-  /**
-   * Reorders PDF pages by index.
-   * Order is a 0-based array of page indices.
-   */
-  reorderPages: (
-    pdfData: Uint8Array,
-    order: number[],
     outputName?: string
   ) => Promise<PdfResult>;
 
