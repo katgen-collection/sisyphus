@@ -1,26 +1,36 @@
 "use client";
 
 import { Wifi, WifiOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+
+function subscribeOnline(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
 
 /**
  * Shows offline status indicator when connection is lost.
  */
 export function OfflineIndicator() {
-  const [isOnline, setIsOnline] = useState(true);
+  // Derived from the browser; SSR assumes online (server snapshot).
+  const isOnline = useSyncExternalStore(
+    subscribeOnline,
+    () => navigator.onLine,
+    () => true
+  );
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    setIsOnline(navigator.onLine);
-
     const handleOnline = () => {
-      setIsOnline(true);
       // Keep banner visible briefly to show reconnection
       setTimeout(() => setShowBanner(false), 2000);
     };
 
     const handleOffline = () => {
-      setIsOnline(false);
       setShowBanner(true);
     };
 
@@ -56,7 +66,7 @@ export function OfflineIndicator() {
       ) : (
         <>
           <WifiOff className="w-4 h-4" />
-          <span>You're offline, but don't worry, files are processed locally</span>
+          <span>You&apos;re offline, but don&apos;t worry, files are processed locally</span>
         </>
       )}
     </div>

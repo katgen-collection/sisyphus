@@ -94,11 +94,11 @@ export default function Home() {
         <div className="max-w-2xl mx-auto text-center">
           <div className="relative">
             {/* Decorative quote marks */}
-            <span className="absolute -top-6 -left-2 text-6xl text-stone-200 font-serif">"</span>
+            <span className="absolute -top-6 -left-2 text-6xl text-stone-200 font-serif">&quot;</span>
             <blockquote className="relative text-xl lg:text-2xl text-stone-600 italic font-light leading-relaxed">
-              The struggle itself toward the heights is enough to fill a man's heart. One must imagine Sisyphus happy.
+              The struggle itself toward the heights is enough to fill a man&apos;s heart. One must imagine Sisyphus happy.
             </blockquote>
-            <span className="absolute -bottom-10 -right-2 text-6xl text-stone-200 font-serif">"</span>
+            <span className="absolute -bottom-10 -right-2 text-6xl text-stone-200 font-serif">&quot;</span>
           </div>
           <footer className="mt-8 flex flex-col items-center">
             <div className="h-px w-16 bg-stone-300 mb-4" />

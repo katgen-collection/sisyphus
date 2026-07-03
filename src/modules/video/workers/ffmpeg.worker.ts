@@ -163,7 +163,7 @@ const api: FFmpegWorkerAPI = {
         loaded = true;
         console.log("[FFmpeg] Loaded multi-threaded core ✓");
         return;
-      } catch (mtErr) {
+      } catch {
         console.info("[FFmpeg] Multi-threaded core unavailable, using single-threaded fallback");
         // Reset FFmpeg instance for the retry
         ffmpeg.terminate();

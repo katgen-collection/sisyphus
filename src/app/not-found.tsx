@@ -28,7 +28,7 @@ export default function NotFound() {
         </h2>
 
         <p className="text-stone-500 mb-8 leading-relaxed">
-          Like Sisyphus, we must push forward. The page you're looking for
+          Like Sisyphus, we must push forward. The page you&apos;re looking for
           seems to have tumbled down the mountain.
         </p>
 
@@ -60,7 +60,7 @@ export default function NotFound() {
 
         {/* Quote */}
         <p className="mt-12 text-sm text-stone-400 italic">
-          "One must imagine Sisyphus happy."
+          &quot;One must imagine Sisyphus happy.&quot;
         </p>
       </div>
     </div>

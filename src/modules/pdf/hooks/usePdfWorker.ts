@@ -5,6 +5,8 @@ import { useProcessingState } from "@/modules/_shared";
 import type {
   PdfOptimizeOptions,
   PdfResult,
+  PdfCompressionLevel,
+  PdfCompressResult,
   SignaturePlacement,
   MergePageSource,
   PdfAnnotation,
@@ -16,6 +18,7 @@ interface UsePdfWorkerReturn {
   progress: number;
   error: string | null;
   optimizePdf: (file: File, options?: PdfOptimizeOptions) => Promise<PdfResult | null>;
+  compressPdf: (file: File, level: PdfCompressionLevel) => Promise<PdfCompressResult | null>;
   imagesToPdf: (
     images: Array<{ file: File; order: number }>
   ) => Promise<PdfResult | null>;
@@ -79,6 +82,36 @@ export function usePdfWorker(): UsePdfWorkerReturn {
         };
       } catch (err) {
         const message = err instanceof Error ? err.message : "PDF optimization failed";
+        setError(message);
+        return null;
+      }
+    },
+    [setProcessing, setProgress, setDone, setError]
+  );
+
+  const compressPdf = useCallback(
+    async (
+      file: File,
+      level: PdfCompressionLevel
+    ): Promise<PdfCompressResult | null> => {
+      setProcessing();
+      setProgress(10);
+
+      try {
+        const worker = getPdfWorker();
+        const pdfData = new Uint8Array(await file.arrayBuffer());
+        setProgress(30);
+
+        const result = await worker.compressImages(pdfData, level);
+        setProgress(100);
+        setDone();
+
+        return {
+          ...result,
+          filename: file.name.replace(/\.pdf$/i, "_compressed.pdf"),
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "PDF compression failed";
         setError(message);
         return null;
       }
@@ -275,6 +308,7 @@ export function usePdfWorker(): UsePdfWorkerReturn {
     progress,
     error,
     optimizePdf,
+    compressPdf,
     imagesToPdf,
     reorderPdf,
     mergePdfs,

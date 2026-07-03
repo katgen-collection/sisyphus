@@ -10,34 +10,63 @@ import {
 } from "@/modules/_shared";
 import { LoadingSpinner } from "@/components";
 import { usePdfWorker } from "../hooks/usePdfWorker";
+import type { PdfCompressionLevel, PdfCompressionStats, PdfSkipReason } from "../types";
+
+const SKIP_LABELS: Record<PdfSkipReason, string> = {
+  "unsupported-filter": "unsupported format",
+  transparency: "complex transparency",
+  predictor: "compressed data",
+  colorspace: "unsupported color",
+  "not-smaller": "already optimal",
+};
+
+const LEVELS: Array<{
+  id: PdfCompressionLevel;
+  label: string;
+  description: string;
+}> = [
+  { id: "light", label: "Light", description: "Best quality, modest shrink" },
+  { id: "balanced", label: "Balanced", description: "Great for slides — recommended" },
+  { id: "maximum", label: "Maximum", description: "Smallest file size" },
+];
+
+function formatMB(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
 
 /**
- * PDF compression/optimization tool.
- * Strips metadata, flattens forms, re-saves.
+ * PDF compression tool.
+ * Recompresses embedded images in place; text and vectors are preserved.
  */
 export function PdfCompress() {
-  const { state, progress, error, optimizePdf, reset } = usePdfWorker();
+  const { state, error, compressPdf, reset } = usePdfWorker();
   const [file, setFile] = useState<AcceptedFile | null>(null);
-  const [removeMetadata, setRemoveMetadata] = useState(true);
-  const [flattenForms, setFlattenForms] = useState(true);
+  const [level, setLevel] = useState<PdfCompressionLevel>("balanced");
+  const [stats, setStats] = useState<PdfCompressionStats | null>(null);
 
   const handleFilesAccepted = useCallback((files: AcceptedFile[]) => {
     setFile(files[0] ?? null);
+    setStats(null);
     reset();
   }, [reset]);
 
-  const handleOptimize = useCallback(async () => {
+  const handleCompress = useCallback(async () => {
     if (!file) return;
 
-    const result = await optimizePdf(file.file, { removeMetadata, flattenForms });
+    const result = await compressPdf(file.file, level);
 
     if (result) {
+      setStats(result.stats);
       downloadUint8Array(result.data, result.filename, "application/pdf");
     }
-  }, [file, removeMetadata, flattenForms, optimizePdf]);
+  }, [file, level, compressPdf]);
 
   const isProcessing = state === "processing";
   const canProcess = file && !isProcessing;
+  const shrank = stats ? stats.compressedSize < stats.originalSize : false;
+  const savedPct = stats && stats.originalSize > 0
+    ? Math.round(((stats.originalSize - stats.compressedSize) / stats.originalSize) * 100)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -61,40 +90,43 @@ export function PdfCompress() {
       </FileUploader>
 
       {file && (
-        <div className="bg-stone-50 rounded-xl p-5 space-y-4">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={removeMetadata}
-              onChange={(e) => setRemoveMetadata(e.target.checked)}
-              disabled={isProcessing}
-              className="w-4 h-4 rounded border-stone-300 text-stone-800 focus:ring-stone-400"
-            />
-            <div>
-              <span className="text-sm font-medium text-stone-700">Remove Metadata</span>
-              <p className="text-xs text-stone-400">Strips author, title, keywords</p>
-            </div>
-          </label>
-
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={flattenForms}
-              onChange={(e) => setFlattenForms(e.target.checked)}
-              disabled={isProcessing}
-              className="w-4 h-4 rounded border-stone-300 text-stone-800 focus:ring-stone-400"
-            />
-            <div>
-              <span className="text-sm font-medium text-stone-700">Flatten Forms</span>
-              <p className="text-xs text-stone-400">Converts form fields to static content</p>
-            </div>
-          </label>
+        <div className="bg-stone-50 rounded-xl p-5 space-y-3">
+          <p className="text-sm font-medium text-stone-700">Compression level</p>
+          <div className="grid grid-cols-3 gap-2">
+            {LEVELS.map((option) => {
+              const active = level === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setLevel(option.id)}
+                  disabled={isProcessing}
+                  className={`
+                    rounded-lg border p-3 text-left transition-colors
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    ${active
+                      ? "border-stone-800 bg-stone-100 text-stone-900"
+                      : "border-stone-200 bg-white text-stone-600 hover:border-stone-300"
+                    }
+                  `}
+                >
+                  <span className="block text-sm font-medium">{option.label}</span>
+                  <span className="block text-xs text-stone-400 mt-0.5">
+                    {option.description}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-stone-400">
+            Recompresses images to shrink the file. Text stays selectable.
+          </p>
         </div>
       )}
 
       {isProcessing && (
         <div className="flex items-center justify-center py-8">
-          <LoadingSpinner size="md" text="Optimizing..." />
+          <LoadingSpinner size="md" text="Compressing..." />
         </div>
       )}
 
@@ -104,14 +136,33 @@ export function PdfCompress() {
         </div>
       )}
 
-      {state === "done" && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700">
-          Optimization complete!
+      {state === "done" && stats && (
+        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700 space-y-1">
+          {shrank ? (
+            <p className="font-medium">
+              {formatMB(stats.originalSize)} → {formatMB(stats.compressedSize)} ({savedPct}% smaller)
+            </p>
+          ) : (
+            <p className="font-medium">Already optimized — couldn&apos;t shrink this file further.</p>
+          )}
+          <p className="text-sm text-green-600">
+            Recompressed {stats.imagesRecompressed} of {stats.imagesTotal} images
+            {stats.duplicatesRemoved > 0 &&
+              `, merged ${stats.duplicatesRemoved} duplicates`}
+          </p>
+          {stats.skipped.length > 0 && (
+            <p className="text-xs text-green-600/80">
+              Skipped:{" "}
+              {stats.skipped
+                .map((s) => `${s.count} ${SKIP_LABELS[s.reason]}`)
+                .join(", ")}
+            </p>
+          )}
         </div>
       )}
 
-      <Button onClick={handleOptimize} disabled={!canProcess} loading={isProcessing} className="w-full">
-        Optimize PDF
+      <Button onClick={handleCompress} disabled={!canProcess} loading={isProcessing} className="w-full">
+        Compress PDF
       </Button>
     </div>
   );

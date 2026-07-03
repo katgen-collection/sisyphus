@@ -18,6 +18,40 @@ export interface PdfResult {
   filename: string;
 }
 
+/** Image-compression aggressiveness for the Compress tool */
+export type PdfCompressionLevel = "light" | "balanced" | "maximum";
+
+/** Why an image was left untouched during compression */
+export type PdfSkipReason =
+  | "unsupported-filter"
+  | "transparency"
+  | "predictor"
+  | "colorspace"
+  | "not-smaller";
+
+/** Count + bytes of images skipped for a given reason */
+export interface PdfSkipTally {
+  reason: PdfSkipReason;
+  count: number;
+  bytes: number;
+}
+
+/** Per-run stats reported back from image compression */
+export interface PdfCompressionStats {
+  imagesTotal: number;
+  duplicatesRemoved: number;
+  imagesEligible: number;
+  imagesRecompressed: number;
+  originalSize: number;
+  compressedSize: number;
+  skipped: PdfSkipTally[];
+}
+
+/** Result from the image-compression operation */
+export interface PdfCompressResult extends PdfResult {
+  stats: PdfCompressionStats;
+}
+
 /** Signature placement information for PDF signing */
 export interface SignaturePlacement {
   id: string;
@@ -72,6 +106,15 @@ export interface PdfWorkerAPI {
     pdfData: Uint8Array,
     options?: PdfOptimizeOptions
   ) => Promise<PdfResult>;
+
+  /**
+   * Compresses a PDF by recompressing its embedded images in place.
+   * Text and vectors are preserved; unsupported images are left untouched.
+   */
+  compressImages: (
+    pdfData: Uint8Array,
+    level: PdfCompressionLevel
+  ) => Promise<PdfCompressResult>;
 
   /**
    * Converts multiple images into a single PDF.

@@ -1,7 +1,6 @@
 // Video module barrel export
 
 export { VideoConverter } from "./components/VideoConverter";
-export { VideoToolShell } from "./components/VideoToolShell";
 export { useFFmpegWorker } from "./hooks/useFFmpegWorker";
 export { getFFmpegWorker, terminateFFmpegWorker } from "./workerClient";
 

@@ -4,7 +4,7 @@ import { Home, Video, FileText, FileCode, PanelLeftClose, PanelLeftOpen } from "
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -12,6 +12,21 @@ const navItems = [
   { href: "/pdf", icon: FileText, label: "PDF" },
   { href: "/markdown", icon: FileCode, label: "Markdown" },
 ];
+
+const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
+// Same-tab-only notification; intentionally NOT the "storage" event, to avoid
+// introducing cross-tab syncing that didn't exist before.
+const COLLAPSE_EVENT = "sidebar-collapse-change";
+
+// Read persisted collapse state; only called on the client.
+function getCollapsedSnapshot() {
+  return localStorage.getItem(COLLAPSE_STORAGE_KEY) === "true";
+}
+
+function subscribeCollapsed(callback: () => void) {
+  window.addEventListener(COLLAPSE_EVENT, callback);
+  return () => window.removeEventListener(COLLAPSE_EVENT, callback);
+}
 
 /**
  * Collapsible sidebar navigation for desktop view.
@@ -21,29 +36,30 @@ const navItems = [
  */
 export function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  // Persisted collapse state; SSR renders expanded to match <html data-sidebar="expanded">.
+  const collapsed = useSyncExternalStore(
+    subscribeCollapsed,
+    getCollapsedSnapshot,
+    () => false
+  );
 
-  // Initialise from localStorage after mount (client-only)
+  // Reflect collapse state on <html> so CSS can drive main's margin/max-width.
+  // Covers the initial hydration-from-storage sync (toggle also sets it eagerly).
   useEffect(() => {
-    const stored = localStorage.getItem("sidebar-collapsed");
-    const isCollapsed = stored === "true";
-    setCollapsed(isCollapsed);
     document.documentElement.setAttribute(
       "data-sidebar",
-      isCollapsed ? "collapsed" : "expanded"
+      collapsed ? "collapsed" : "expanded"
     );
-  }, []);
+  }, [collapsed]);
 
   const toggle = useCallback(() => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem("sidebar-collapsed", String(next));
-      document.documentElement.setAttribute(
-        "data-sidebar",
-        next ? "collapsed" : "expanded"
-      );
-      return next;
-    });
+    const next = !getCollapsedSnapshot();
+    localStorage.setItem(COLLAPSE_STORAGE_KEY, String(next));
+    document.documentElement.setAttribute(
+      "data-sidebar",
+      next ? "collapsed" : "expanded"
+    );
+    window.dispatchEvent(new Event(COLLAPSE_EVENT));
   }, []);
 
   return (

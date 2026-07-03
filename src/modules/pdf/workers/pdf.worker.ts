@@ -1,5 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import * as Comlink from "comlink";
+import { compressPdfImages, type CompressionStats } from "./imageCompression";
+import { encodeImage } from "./imageCodec";
 
 /**
  * PDF processing worker.
@@ -15,6 +17,22 @@ interface PdfOptimizeOptions {
 interface PdfResult {
   data: Uint8Array;
   filename: string;
+}
+
+/** Image-compression aggressiveness, mapped to size cap + JPEG quality. */
+type PdfCompressionLevel = "light" | "balanced" | "maximum";
+
+const COMPRESSION_LEVELS: Record<
+  PdfCompressionLevel,
+  { maxEdge: number; quality: number }
+> = {
+  light: { maxEdge: 1800, quality: 0.78 },
+  balanced: { maxEdge: 1400, quality: 0.65 },
+  maximum: { maxEdge: 1000, quality: 0.5 },
+};
+
+interface PdfCompressResult extends PdfResult {
+  stats: CompressionStats;
 }
 
 interface ImageInput {
@@ -65,6 +83,7 @@ interface MergePageSource {
 
 interface PdfWorkerAPI {
   optimize: (pdfData: Uint8Array, options?: PdfOptimizeOptions) => Promise<PdfResult>;
+  compressImages: (pdfData: Uint8Array, level: PdfCompressionLevel) => Promise<PdfCompressResult>;
   imagesToPdf: (images: ImageInput[], outputName?: string) => Promise<PdfResult>;
   reorderPages: (pdfData: Uint8Array, order: number[], outputName?: string) => Promise<PdfResult>;
   mergeDocuments: (sources: Uint8Array[], pages: MergePageSource[], outputName?: string) => Promise<PdfResult>;
@@ -104,6 +123,20 @@ const api: PdfWorkerAPI = {
     return {
       data: optimized,
       filename: "optimized.pdf",
+    };
+  },
+
+  async compressImages(
+    pdfData: Uint8Array,
+    level: PdfCompressionLevel = "balanced"
+  ): Promise<PdfCompressResult> {
+    const params = COMPRESSION_LEVELS[level] ?? COMPRESSION_LEVELS.balanced;
+    const { data, stats } = await compressPdfImages(pdfData, params, encodeImage);
+
+    return {
+      data,
+      filename: "compressed.pdf",
+      stats,
     };
   },
 

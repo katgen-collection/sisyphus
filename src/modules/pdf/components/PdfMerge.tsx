@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { FileText, Loader2, AlertCircle, X, Download, RotateCcw, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { FileText, Loader2, AlertCircle, X, Download, RotateCcw, ChevronUp, ChevronDown } from "lucide-react";
 import {
     FileUploader,
     Button,
