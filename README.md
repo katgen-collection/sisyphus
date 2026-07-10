@@ -12,6 +12,7 @@ So this project is my attempt to push the boulder uphill in the right direction:
   - Compress / optimize PDFs  
   - PDF to images  
   - Images to PDF  
+  - Preserve website links and in-document navigation when merging or reordering pages
 
 - **Video tools (basic set)**
   - Convert / compress / resize (FFmpeg via Web Worker)

@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { useProcessingState } from "@/modules/_shared";
 import type {
   PdfResult,
+  PdfMergeResult,
   PdfCompressionLevel,
   PdfCompressResult,
   SignaturePlacement,
@@ -23,7 +24,7 @@ interface UsePdfWorkerReturn {
   mergePdfs: (
     files: File[],
     pages: MergePageSource[]
-  ) => Promise<PdfResult | null>;
+  ) => Promise<PdfMergeResult | null>;
   signPdf: (
     pdfData: Uint8Array,
     signatures: SignaturePlacement[],
@@ -187,7 +188,7 @@ export function usePdfWorker(): UsePdfWorkerReturn {
   );
 
   const mergePdfs = useCallback(
-    async (files: File[], pages: MergePageSource[]): Promise<PdfResult | null> => {
+    async (files: File[], pages: MergePageSource[]): Promise<PdfMergeResult | null> => {
       setProcessing();
       setProgress(10);
 

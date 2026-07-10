@@ -38,6 +38,20 @@ export interface PdfCompressResult extends PdfResult {
   stats: PdfCompressionStats;
 }
 
+/** Link handling summary for a merged document. */
+export interface PdfLinkIntegrityStats {
+  linksFound: number;
+  externalPreserved: number;
+  internalRewritten: number;
+  internalRemoved: number;
+  otherPreserved: number;
+}
+
+/** Result from a merge operation, including hyperlink preservation details. */
+export interface PdfMergeResult extends PdfResult {
+  linkStats: PdfLinkIntegrityStats;
+}
+
 /** Signature placement information for PDF signing */
 export interface SignaturePlacement {
   id: string;
@@ -110,7 +124,7 @@ export interface PdfWorkerAPI {
     sources: Uint8Array[], // Array of source PDF files
     pages: MergePageSource[], // Ordered list of pages to include
     outputName?: string
-  ) => Promise<PdfResult>;
+  ) => Promise<PdfMergeResult>;
 
   /**
    * Adds signature images to a PDF at specified locations.

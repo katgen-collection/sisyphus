@@ -2,6 +2,11 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import * as Comlink from "comlink";
 import { compressPdfImages, type CompressionStats } from "./imageCompression";
 import { encodeImage } from "./imageCodec";
+import {
+  preserveMergedLinks,
+  type LinkIntegrityStats,
+  type MergePageCopy,
+} from "./linkIntegrity";
 
 /**
  * PDF processing worker.
@@ -28,6 +33,10 @@ const COMPRESSION_LEVELS: Record<
 
 interface PdfCompressResult extends PdfResult {
   stats: CompressionStats;
+}
+
+interface PdfMergeResult extends PdfResult {
+  linkStats: LinkIntegrityStats;
 }
 
 interface ImageInput {
@@ -79,7 +88,7 @@ interface MergePageSource {
 interface PdfWorkerAPI {
   compressImages: (pdfData: Uint8Array, level: PdfCompressionLevel) => Promise<PdfCompressResult>;
   imagesToPdf: (images: ImageInput[], outputName?: string) => Promise<PdfResult>;
-  mergeDocuments: (sources: Uint8Array[], pages: MergePageSource[], outputName?: string) => Promise<PdfResult>;
+  mergeDocuments: (sources: Uint8Array[], pages: MergePageSource[], outputName?: string) => Promise<PdfMergeResult>;
   addSignatures: (pdfData: Uint8Array, signatures: SignatureInput[], outputName?: string) => Promise<PdfResult>;
   annotatePdf: (pdfData: Uint8Array, annotations: PdfAnnotation[], outputName?: string) => Promise<PdfResult>;
 }
@@ -180,7 +189,7 @@ const api: PdfWorkerAPI = {
     sources: Uint8Array[],
     pages: MergePageSource[],
     outputName: string = "merged.pdf"
-  ): Promise<PdfResult> {
+  ): Promise<PdfMergeResult> {
     const resultDoc = await PDFDocument.create();
 
     // Load all source documents
@@ -188,38 +197,27 @@ const api: PdfWorkerAPI = {
       sources.map(src => PDFDocument.load(src, { ignoreEncryption: true }))
     );
 
-    // Copy pages based on the order
-    // We can optimization by grouping pages by source document to reduce copyPages calls
-    // But for simplicity and correctness with arbitrary order, we can just iterate.
-    // Actually, copyPages is much more efficient if done in batches.
-
-    // Naïve approach might be slow if many switches between docs.
-    // Better:
-    // 1. Group pages by source doc index: Map<docIndex, pageIndices[]>
-    // 2. Copy all needed pages from each doc to the resultDoc (they become "embedded")
-    // 3. Add them to the resultDoc in the correct order.
-    // BUT pdf-lib copyPages returns IPDFPage[] which are not yet added. We can hold them.
-
-    // Let's stick to a simpler approach first, pdf-lib copyPages allows copying multiple indices at once.
-    // We can't really "hold" them easily without managing indices.
-
-    // Let's try:
-    // For each item in `pages`:
-    //   sourceDoc = sourceDocs[item.fileIndex]
-    //   [copiedPage] = await resultDoc.copyPages(sourceDoc, [item.pageIndex])
-    //   resultDoc.addPage(copiedPage)
-
+    const pageCopies: MergePageCopy[] = [];
     for (const p of pages) {
       if (p.fileIndex < 0 || p.fileIndex >= sourceDocs.length) continue;
       const srcDoc = sourceDocs[p.fileIndex];
+      if (p.pageIndex < 0 || p.pageIndex >= srcDoc.getPageCount()) continue;
       const [copiedPage] = await resultDoc.copyPages(srcDoc, [p.pageIndex]);
       resultDoc.addPage(copiedPage);
+      pageCopies.push({
+        sourceIndex: p.fileIndex,
+        sourcePageIndex: p.pageIndex,
+        copiedPage,
+      });
     }
+
+    const linkStats = preserveMergedLinks(sourceDocs, resultDoc, pageCopies);
 
     const pdfBytes = await resultDoc.save();
     return {
       data: pdfBytes,
       filename: outputName,
+      linkStats,
     };
   },
 

@@ -13,6 +13,7 @@ import { LoadingSpinner } from "@/components";
 import { MergePageSource } from "../types";
 import { loadPdfjs, type PDFDocumentProxy } from "../lib/pdfjs";
 import { PdfLazyPage } from "./PdfLazyPage";
+import type { PdfLinkIntegrityStats } from "../types";
 
 interface PageItem {
     id: string;
@@ -44,6 +45,7 @@ export function PdfMerge() {
     const [pages, setPages] = useState<PageItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [previewError, setPreviewError] = useState<string | null>(null);
+    const [linkStats, setLinkStats] = useState<PdfLinkIntegrityStats | null>(null);
 
     // Desktop HTML5 drag
     const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -70,6 +72,7 @@ export function PdfMerge() {
 
             setIsLoading(true);
             setPreviewError(null);
+            setLinkStats(null);
             reset();
 
             try {
@@ -232,6 +235,7 @@ export function PdfMerge() {
         setFiles([]);
         setPages([]);
         setPreviewError(null);
+        setLinkStats(null);
         reset();
     }, [files, reset]);
 
@@ -252,6 +256,7 @@ export function PdfMerge() {
 
             const result = await mergePdfs(sourceFiles, mergePages);
             if (result) {
+                setLinkStats(result.linkStats);
                 downloadUint8Array(result.data, result.filename, "application/pdf");
             }
         } catch (err) {
@@ -447,8 +452,14 @@ export function PdfMerge() {
 
             {/* Success */}
             {state === "done" && (
-                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700">
-                    Files merged successfully! Download started.
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700 space-y-1">
+                    <p>Files merged successfully! Download started.</p>
+                    {linkStats && linkStats.linksFound > 0 && (
+                        <p className="text-sm text-green-600">
+                            Links: {linkStats.externalPreserved + linkStats.internalRewritten + linkStats.otherPreserved} preserved
+                            {linkStats.internalRemoved > 0 && `, ${linkStats.internalRemoved} removed because their targets are unavailable in the merged document`}
+                        </p>
+                    )}
                 </div>
             )}
 
