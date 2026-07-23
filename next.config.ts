@@ -14,6 +14,21 @@ const withPWA = withPWAInit({
     // Explicit runtime caching strategies for offline support
     runtimeCaching: [
       {
+        // Keep lazy worker and codec assets available after their first use.
+        urlPattern: ({ request, sameOrigin, url }) =>
+          sameOrigin &&
+          (["script", "worker"].includes(request.destination) ||
+            url.pathname.endsWith(".wasm")),
+        handler: "CacheFirst",
+        options: {
+          cacheName: "local-codecs",
+          expiration: {
+            maxEntries: 80,
+            maxAgeSeconds: 60 * 60 * 24 * 30,
+          },
+        },
+      },
+      {
         // Cache page navigations (HTML) — network first, fallback to cache
         urlPattern: /^https?.*\/(_next\/static|_next\/image|favicon\.ico)/,
         handler: "CacheFirst",

@@ -23,8 +23,8 @@ export function BottomNav() {
                 key={href}
                 href={href}
                 className={`
-                  flex flex-col items-center justify-center gap-1.5
-                  flex-1 h-full px-3 py-2
+                  flex flex-col items-center justify-center gap-1
+                  flex-1 min-w-0 h-full px-1 py-2
                   transition-all duration-200
                   ${isActive 
                     ? "text-stone-900" 
@@ -35,7 +35,7 @@ export function BottomNav() {
                 <div className={`relative ${isActive ? "scale-110" : ""} transition-transform duration-200`}>
                   <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`} />
                 </div>
-                <span className={`text-xs font-medium`}>
+                <span className="text-[11px] leading-none font-medium whitespace-nowrap">
                   {label}
                 </span>
               </Link>

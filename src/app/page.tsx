@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, FileText, FileCode, Shield, Zap, HardDrive } from "lucide-react";
+import { Video, Image, FileText, FileCode, Shield, Zap, HardDrive } from "lucide-react";
 import { ToolCard, SpinningLogo } from "@/components";
 
 export default function Home() {
@@ -46,6 +46,12 @@ export default function Home() {
               icon={Video}
               title="Video Tools"
               description="Convert, compress, and resize videos"
+            />
+            <ToolCard
+              href="/image"
+              icon={Image}
+              title="Image Tools"
+              description="Convert, compress, resize, and crop images"
             />
             <ToolCard
               href="/pdf"

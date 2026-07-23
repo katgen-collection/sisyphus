@@ -1,4 +1,4 @@
-import { Home, Video, FileText, FileCode } from "lucide-react";
+import { Home, Video, Image, FileText, FileCode } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface NavItem {
@@ -15,6 +15,7 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { href: "/", icon: Home, label: "Home" },
   { href: "/video", icon: Video, label: "Video" },
+  { href: "/image", icon: Image, label: "Image" },
   { href: "/pdf", icon: FileText, label: "PDF" },
   { href: "/markdown", icon: FileCode, label: "Markdown" },
 ];
