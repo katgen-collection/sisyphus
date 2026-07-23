@@ -41,7 +41,7 @@ export function SignatureCanvas({
 
   // Scale factor for high DPI displays
   const scale = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-  
+
   // Calculate canvas height from aspect ratio, clamped to comfortable range
   const calculatedHeight = CANVAS_WIDTH / aspectRatio;
   const canvasHeight = Math.max(MIN_CANVAS_HEIGHT, Math.min(MAX_CANVAS_HEIGHT, calculatedHeight));
@@ -62,11 +62,11 @@ export function SignatureCanvas({
     // Scale context to ensure correct drawing operations
     ctx.scale(scale, scale);
 
-    // Clear canvas
+    // Clear canvas — white fill preserved (signature needs white background)
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    // Draw all strokes
+    // Draw all strokes — fixed ink color preserved (theme-independent)
     ctx.strokeStyle = "#1c1917";
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
@@ -201,12 +201,12 @@ export function SignatureCanvas({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="text-sm text-stone-500 text-center mb-2">
+      <div className="text-sm text-secondary text-center mb-2">
         Draw your signature below
       </div>
 
       <div
-        className="relative rounded-xl border-2 border-stone-300 bg-white overflow-hidden touch-none"
+        className="relative rounded-xl border-2 border-border bg-white overflow-hidden touch-none"
         style={{ width: canvasWidth, height: canvasHeight }}
       >
         <canvas
@@ -222,10 +222,10 @@ export function SignatureCanvas({
           onTouchCancel={handlePointerUp}
           className="cursor-crosshair"
         />
-        
+
         {/* Signature line hint */}
         <div
-          className="absolute bottom-6 left-6 right-6 border-b border-dashed border-stone-300 pointer-events-none"
+          className="absolute bottom-6 left-6 right-6 border-b border-dashed border-border pointer-events-none"
         />
       </div>
 

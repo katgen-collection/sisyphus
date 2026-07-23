@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { FileText } from "lucide-react";
-import "highlight.js/styles/github.css";
+import "../highlight.css";
 
 interface MarkdownPreviewProps {
   /** Raw markdown string to render */
@@ -29,25 +29,25 @@ export const MarkdownPreview = forwardRef<HTMLDivElement, MarkdownPreviewProps>(
     const zoomPercent = Math.round(zoom * 100);
 
     return (
-      <div className="flex flex-col rounded-xl border border-stone-200 overflow-hidden shadow-sm">
+      <div className="flex flex-col rounded-xl border border-border overflow-hidden shadow-sm">
         {/* Header bar */}
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-stone-50 border-b border-stone-200">
-          <FileText className="w-3.5 h-3.5 text-stone-400" />
-          <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-surface-subtle border-b border-border">
+          <FileText className="w-3.5 h-3.5 text-muted" />
+          <span className="text-xs font-medium text-secondary uppercase tracking-wider">
             Preview
           </span>
           {zoom !== 1 && (
-            <span className="ml-auto text-xs text-stone-400 font-mono">
+            <span className="ml-auto text-xs text-muted font-mono">
               {zoomPercent}%
             </span>
           )}
         </div>
 
         {/* Scrollable preview — zoomed via fontSize, not transform */}
-        <div className="flex-1 overflow-auto bg-white">
+        <div className="flex-1 overflow-auto bg-surface">
           <div
             ref={ref}
-            className="md-preview p-6 bg-white"
+            className="md-preview p-6 bg-surface"
             style={{ fontSize: `${zoom * 100}%` }}
           >
             <ReactMarkdown

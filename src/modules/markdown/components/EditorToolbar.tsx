@@ -27,9 +27,9 @@ export function EditorToolbar({
   const zoomPercent = Math.round(zoom * 100);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 bg-white border border-stone-200 rounded-xl shadow-sm">
+    <div className="flex flex-wrap items-center gap-2 p-3 bg-surface border border-border rounded-xl shadow-sm">
       {/* View mode toggles */}
-      <div className="flex items-center bg-stone-100 rounded-lg p-0.5 gap-0.5">
+      <div className="flex items-center bg-surface-subtle rounded-lg p-0.5 gap-0.5">
         <ViewToggle
           id="view-split"
           label="Split"
@@ -55,24 +55,24 @@ export function EditorToolbar({
 
       {/* Zoom controls */}
       {viewMode !== "editor" && (
-        <div className="flex items-center gap-1.5 bg-stone-100 rounded-lg px-2 py-1">
+        <div className="flex items-center gap-1.5 bg-surface-subtle rounded-lg px-2 py-1">
           <button
             id="zoom-out"
             onClick={() => onZoomChange(Math.max(0.5, parseFloat((zoom - 0.05).toFixed(2))))}
             disabled={zoom <= 0.5}
-            className="w-6 h-6 flex items-center justify-center rounded text-stone-500 hover:text-stone-800 hover:bg-stone-200 disabled:opacity-30 transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded text-muted hover:text-primary hover:bg-surface-muted disabled:opacity-30 transition-colors"
             aria-label="Zoom out"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
-          <span className="text-xs font-mono text-stone-600 w-10 text-center select-none">
+          <span className="text-xs font-mono text-secondary w-10 text-center select-none">
             {zoomPercent}%
           </span>
           <button
             id="zoom-in"
             onClick={() => onZoomChange(Math.min(2, parseFloat((zoom + 0.05).toFixed(2))))}
             disabled={zoom >= 2}
-            className="w-6 h-6 flex items-center justify-center rounded text-stone-500 hover:text-stone-800 hover:bg-stone-200 disabled:opacity-30 transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded text-muted hover:text-primary hover:bg-surface-muted disabled:opacity-30 transition-colors"
             aria-label="Zoom in"
           >
             <ZoomIn className="w-3.5 h-3.5" />
@@ -85,7 +85,7 @@ export function EditorToolbar({
             step={5}
             value={zoomPercent}
             onChange={(e) => onZoomChange(Number(e.target.value) / 100)}
-            className="w-20 h-1.5 accent-stone-700 cursor-pointer"
+            className="w-20 h-1.5 accent-primary cursor-pointer"
             aria-label="Zoom level"
           />
         </div>
@@ -135,8 +135,8 @@ function ViewToggle({ id, label, icon, active, onClick }: ViewToggleProps) {
         flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium
         transition-all duration-150
         ${active
-          ? "bg-white text-stone-800 shadow-sm border border-stone-200"
-          : "text-stone-500 hover:text-stone-700"
+          ? "bg-surface text-primary shadow-sm border border-border"
+          : "text-secondary hover:text-primary"
         }
       `}
     >

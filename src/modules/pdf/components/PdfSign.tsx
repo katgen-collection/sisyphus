@@ -51,13 +51,13 @@ export function PdfSign() {
   // placement surface has the right aspect ratio without rasterizing anything.
   const [pageDims, setPageDims] = useState<{ width: number; height: number } | null>(null);
   const [signatures, setSignatures] = useState<SignaturePlacement[]>([]);
-  
+
   // UI state
   const [step, setStep] = useState<Step>("upload");
   const [isLoading, setIsLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [selectedPageIndex, setSelectedPageIndex] = useState<number>(0);
-  
+
   // Signature placement state
   const [placementBox, setPlacementBox] = useState<{
     x: number;
@@ -237,7 +237,7 @@ export function PdfSign() {
       // Generate output filename from original
       const originalName = file.file.name.replace(/\.pdf$/i, "");
       const outputName = `${originalName}_signed.pdf`;
-      
+
       const result = await signPdf(pdfData, signatures, outputName);
       if (result) {
         downloadUint8Array(result.data, result.filename, "application/pdf");
@@ -280,12 +280,12 @@ export function PdfSign() {
         <div className="flex items-center justify-between text-sm">
           <button
             onClick={handleBack}
-            className="flex items-center gap-1 text-stone-500 hover:text-stone-700 transition-colors"
+            className="flex items-center gap-1 text-secondary hover:text-primary transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
             Back
           </button>
-          <div className="text-stone-400">
+          <div className="text-muted">
             {step === "select-page" && "Select a page to sign"}
             {step === "place-signature" && (placementBox && placementBox.width > 5 ? "Confirm placement or redraw" : "Draw a box where you want to sign")}
             {step === "draw" && "Draw your signature"}
@@ -303,8 +303,8 @@ export function PdfSign() {
         >
           {isLoading ? (
             <div className="text-center">
-              <Loader2 className="w-8 h-8 mx-auto text-stone-400 animate-spin mb-2" />
-              <p className="text-stone-500">Loading PDF...</p>
+              <Loader2 className="w-8 h-8 mx-auto text-muted animate-spin mb-2" />
+              <p className="text-secondary">Loading PDF...</p>
             </div>
           ) : undefined}
         </FileUploader>
@@ -314,11 +314,11 @@ export function PdfSign() {
       {step === "select-page" && numPages > 0 && (
         <div className="space-y-4">
           {/* File info */}
-          <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-            <FileText className="w-5 h-5 text-stone-500" />
+          <div className="flex items-center gap-3 p-3 bg-surface-subtle rounded-lg">
+            <FileText className="w-5 h-5 text-secondary" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-stone-700 truncate">{file?.file.name}</p>
-              <p className="text-xs text-stone-400">{numPages} page{numPages !== 1 ? "s" : ""}</p>
+              <p className="text-sm font-medium text-primary truncate">{file?.file.name}</p>
+              <p className="text-xs text-muted">{numPages} page{numPages !== 1 ? "s" : ""}</p>
             </div>
           </div>
 
@@ -337,7 +337,7 @@ export function PdfSign() {
                     relative aspect-3/4 rounded-lg overflow-hidden border-2 transition-all
                     ${hasSignatures
                       ? "border-emerald-400 ring-2 ring-emerald-100"
-                      : "border-stone-200 hover:border-stone-400"
+                      : "border-border hover:border-border-strong"
                     }
                   `}
                 >
@@ -389,17 +389,17 @@ export function PdfSign() {
             <button
               onClick={() => setSelectedPageIndex((i) => Math.max(0, i - 1))}
               disabled={selectedPageIndex === 0}
-              className="p-2 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg bg-surface-subtle text-secondary hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="text-sm text-stone-500">
+            <span className="text-sm text-secondary">
               Page {selectedPageIndex + 1} of {numPages}
             </span>
             <button
               onClick={() => setSelectedPageIndex((i) => Math.min(numPages - 1, i + 1))}
               disabled={selectedPageIndex === numPages - 1}
-              className="p-2 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg bg-surface-subtle text-secondary hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -452,7 +452,7 @@ export function PdfSign() {
               </div>
             ))}
 
-            {/* Current placement box */}
+            {/* Current placement box — dashed functional border preserved */}
             {placementBox && placementBox.width > 0 && placementBox.height > 0 && (
               <div
                 className="absolute border-2 border-dashed border-stone-600 bg-stone-200/30"
@@ -468,7 +468,7 @@ export function PdfSign() {
             {/* Overlay hint */}
             {!isPlacing && !placementBox && (
               <div className="absolute inset-0 flex items-center justify-center bg-stone-900/10 pointer-events-none">
-                <div className="px-4 py-2 rounded-lg bg-white/90 text-stone-600 text-sm shadow-lg">
+                <div className="px-4 py-2 rounded-lg bg-surface/90 text-secondary text-sm shadow-lg">
                   Click and drag to place signature
                 </div>
               </div>
@@ -476,10 +476,10 @@ export function PdfSign() {
           </div>
         </div>
 
-          {/* Existing signatures list */}
+          {/* Existing signatures list — emerald preserved */}
           {pageSignatures.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm text-stone-500">Signatures on this page:</p>
+              <p className="text-sm text-secondary">Signatures on this page:</p>
               <div className="flex flex-wrap gap-2">
                 {pageSignatures.map((sig, idx) => (
                   <div
@@ -535,11 +535,11 @@ export function PdfSign() {
         </div>
       )}
 
-      {/* Draw signature step (modal-like) */}
+      {/* Draw signature step (modal-like) — overlay preserved */}
       {step === "draw" && placementBox && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/50 p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-stone-800 text-center mb-4">
+          <div className="w-full max-w-md bg-surface rounded-2xl p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-primary text-center mb-4">
               Draw Your Signature
             </h3>
             <SignatureCanvas
@@ -554,7 +554,7 @@ export function PdfSign() {
         </div>
       )}
 
-      {/* Review step */}
+      {/* Review step — emerald preserved for intentional status color */}
       {step === "review" && (
         <div className="space-y-4">
           <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
@@ -636,7 +636,7 @@ export function PdfSign() {
 
       {/* Error display */}
       {(state === "error" || previewError) && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 flex items-center gap-2">
+        <div className="bg-error-bg border border-error-border rounded-lg px-4 py-3 text-error-text flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           {error || previewError}
         </div>
@@ -644,7 +644,7 @@ export function PdfSign() {
 
       {/* Success message */}
       {state === "done" && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700">
+        <div className="bg-success-bg border border-success-border rounded-lg px-4 py-3 text-success-text">
           PDF signed successfully! Download started.
         </div>
       )}

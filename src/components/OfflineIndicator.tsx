@@ -52,9 +52,9 @@ export function OfflineIndicator() {
         flex items-center justify-center gap-2 py-2 px-4
         text-sm font-medium
         transition-colors duration-300
-        ${isOnline 
-          ? "bg-green-100 text-green-800" 
-          : "bg-amber-100 text-amber-800"
+        ${isOnline
+          ? "bg-success-bg text-success-text"
+          : "bg-warning-bg text-warning-text"
         }
       `}
     >

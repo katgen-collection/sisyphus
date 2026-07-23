@@ -22,46 +22,46 @@ export function LoadingSpinner({ size = "md", text }: LoadingSpinnerProps) {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
-      <div 
+      <div
         className="relative flex items-center justify-center"
         style={{ width: outer, height: outer }}
       >
         {/* Outer spinning ring */}
-        <div 
-          className="absolute inset-0 rounded-full border-stone-200 animate-spin"
-          style={{ 
+        <div
+          className="absolute inset-0 rounded-full border-surface-muted animate-spin"
+          style={{
             borderWidth: border,
-            borderTopColor: '#78716c', // stone-500
-            borderRightColor: 'transparent',
-            borderBottomColor: 'transparent',
-            borderLeftColor: 'transparent',
+            borderTopColor: "var(--color-secondary)",
+            borderRightColor: "transparent",
+            borderBottomColor: "transparent",
+            borderLeftColor: "transparent",
           }}
         />
-        
+
         {/* Second ring - opposite direction */}
-        <div 
-          className="absolute rounded-full border-stone-100 animate-spin-reverse"
-          style={{ 
+        <div
+          className="absolute rounded-full border-surface-subtle animate-spin-reverse"
+          style={{
             width: outer - border * 4,
             height: outer - border * 4,
             borderWidth: border - 1,
-            borderTopColor: 'transparent',
-            borderRightColor: '#a8a29e', // stone-400
-            borderBottomColor: 'transparent',
-            borderLeftColor: 'transparent',
+            borderTopColor: "transparent",
+            borderRightColor: "var(--color-muted)",
+            borderBottomColor: "transparent",
+            borderLeftColor: "transparent",
           }}
         />
 
         {/* Center logo - spinning */}
-        <SpinningLogo 
-          size={logo} 
+        <SpinningLogo
+          size={logo}
           spinning={true}
           spinOnHover={false}
         />
       </div>
-      
+
       {text && (
-        <p className="text-sm text-stone-500 animate-pulse">{text}</p>
+        <p className="text-sm text-secondary animate-pulse">{text}</p>
       )}
     </div>
   );

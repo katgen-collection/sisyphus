@@ -1,75 +1,235 @@
 @import "tailwindcss";
 
-:root {
-  --background: #fafaf9;
-  --foreground: #1c1917;
+/* ── Theme palette ─────────────────────────────────────────────── */
+/* data-theme="light" (default server-render) */
+:root,
+html[data-theme="light"] {
+  --color-canvas: #fafaf9;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-subtle: #f5f5f4;
+  --color-surface-muted: #e7e5e4;
+  --color-primary: #1c1917;
+  --color-secondary: #57534e;
+  --color-muted: #78716c;
+  --color-border: #e7e5e4;
+  --color-border-strong: #d6d3d1;
+  --color-focus: #78716c;
+  --color-glass: rgba(255, 255, 255, 0.80);
+  --color-success-bg: #f0fdf4;
+  --color-success-text: #166534;
+  --color-success-border: #bbf7d0;
+  --color-warning-bg: #fffbeb;
+  --color-warning-text: #92400e;
+  --color-warning-border: #fde68a;
+  --color-error-bg: #fef2f2;
+  --color-error-text: #991b1b;
+  --color-error-border: #fecaca;
+  --color-info-bg: #eff6ff;
+  --color-info-text: #1e40af;
+  --color-info-border: #bfdbfe;
+  --color-texture-opacity: 1;
+  --color-texture-blend: normal;
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  --color-canvas: #0c0a09;
+  --color-surface: #1c1917;
+  --color-surface-raised: #292524;
+  --color-surface-subtle: #211e1c;
+  --color-surface-muted: #44403c;
+  --color-primary: #fafaf9;
+  --color-secondary: #d6d3d1;
+  --color-muted: #a8a29e;
+  --color-border: rgba(168, 162, 158, 0.22);
+  --color-border-strong: rgba(214, 211, 209, 0.35);
+  --color-focus: #d6d3d1;
+  --color-glass: rgba(28, 25, 23, 0.82);
+  --color-success-bg: rgba(22, 101, 52, 0.18);
+  --color-success-text: #86efac;
+  --color-success-border: rgba(34, 197, 94, 0.35);
+  --color-warning-bg: rgba(146, 64, 14, 0.18);
+  --color-warning-text: #fde68a;
+  --color-warning-border: rgba(250, 204, 21, 0.35);
+  --color-error-bg: rgba(153, 27, 27, 0.18);
+  --color-error-text: #fca5a5;
+  --color-error-border: rgba(239, 68, 68, 0.35);
+  --color-info-bg: rgba(30, 64, 175, 0.18);
+  --color-info-text: #93c5fd;
+  --color-info-border: rgba(59, 130, 246, 0.35);
+  --color-texture-opacity: 0.35;
+  --color-texture-blend: soft-light;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-canvas: var(--color-canvas);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-surface-subtle: var(--color-surface-subtle);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-muted: var(--color-muted);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-focus: var(--color-focus);
+  --color-glass: var(--color-glass);
+  --color-success-bg: var(--color-success-bg);
+  --color-success-text: var(--color-success-text);
+  --color-success-border: var(--color-success-border);
+  --color-warning-bg: var(--color-warning-bg);
+  --color-warning-text: var(--color-warning-text);
+  --color-warning-border: var(--color-warning-border);
+  --color-error-bg: var(--color-error-bg);
+  --color-error-text: var(--color-error-text);
+  --color-error-border: var(--color-error-border);
+  --color-info-bg: var(--color-info-bg);
+  --color-info-text: var(--color-info-text);
+  --color-info-border: var(--color-info-border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/* Safe area insets for notched devices */
+/* ── Safe area insets ──────────────────────────────────────────── */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
+/* ── Body / canvas / texture ───────────────────────────────────── */
 body {
-  background-color: #ffffff;
-  background-image: url("/assets/texture.png");
-  background-repeat: repeat;
-  background-size: 240px 240px;
-  color: var(--foreground);
+  background-color: var(--color-canvas);
+  color: var(--color-primary);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("/assets/texture.png");
+  background-repeat: repeat;
+  background-size: 240px 240px;
+  opacity: var(--color-texture-opacity);
+  background-blend-mode: var(--color-texture-blend);
+}
+/* Non-content surfaces above texture but below interactive layers.
+   Sidebar <aside> and BottomNav <nav> are excluded from position: relative
+   because they use fixed positioning via Tailwind utilities — layering
+   position: relative here (unlayered) defeats the layered .fixed utility. */
+main, header, footer, .above-texture {
+  position: relative;
+  z-index: 1;
+}
+/* Sidebar and BottomNav already establish their own stacking contexts
+   via fixed positioning (z-20 / z-50), so they only need the relative
+   z-index bump when they fall back to static (e.g. print or forced-colors). */
+aside, nav {
+  z-index: 1;
+}
 
-/* Prevent pull-to-refresh on mobile */
+/* ── Application-owned color transitions ──────────────────────── */
+html[data-theme] body,
+html[data-theme] aside,
+html[data-theme] nav,
+html[data-theme] header,
+html[data-theme] main,
+html[data-theme] button:not([class*="no-theme-transition"]),
+html[data-theme] a:not([class*="no-theme-transition"]),
+html[data-theme] input,
+html[data-theme] select,
+html[data-theme] textarea {
+  transition: background-color 150ms ease-out, border-color 150ms ease-out,
+    color 150ms ease-out, box-shadow 150ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme] * {
+    transition-duration: 0ms !important;
+  }
+}
+
+/* ── Prevent pull-to-refresh ───────────────────────────────────── */
 html {
   overscroll-behavior: none;
 }
 
-/* Smooth scrolling */
+/* ── Smooth scrolling ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
   }
 }
 
-/* Touch action for better mobile performance */
+/* ── Touch action ──────────────────────────────────────────────── */
 button, a {
   touch-action: manipulation;
 }
 
-/* Desktop sidebar layout — driven by data-sidebar attribute on <html> */
+/* ── Scrollbar ─────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-surface-muted);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted);
+  }
+}
+/* Firefox */
+html {
+  scrollbar-color: var(--color-surface-muted) transparent;
+}
+html[data-theme="dark"] {
+  scrollbar-color: var(--color-surface-muted) transparent;
+}
+
+/* ── Selection ─────────────────────────────────────────────────── */
+::selection {
+  background-color: var(--color-border-strong);
+  color: var(--color-primary);
+}
+
+/* ── Forced-colors hook ────────────────────────────────────────── */
+@media (forced-colors: active) {
+  :root, html[data-theme] {
+    --color-canvas: Canvas;
+    --color-primary: CanvasText;
+    --color-border: ButtonBorder;
+    --color-focus: Highlight;
+  }
+}
+
+/* ── Sidebar layout ────────────────────────────────────────────── */
 @media (min-width: 1024px) {
   [data-sidebar="expanded"] main {
-    margin-left: 16rem; /* 256px — full sidebar */
+    margin-left: 16rem;
     transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   [data-sidebar="collapsed"] main {
-    margin-left: 4rem; /* 64px — icon-only sidebar */
+    margin-left: 4rem;
     transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
-
-/* CSS variable: page content max-width responds to sidebar state */
 :root {
-  --page-max-width: 64rem; /* 1024px — 5xl */
+  --page-max-width: 64rem;
 }
 @media (min-width: 1024px) {
   [data-sidebar="collapsed"] {
-    --page-max-width: 80rem; /* 1280px — 7xl when sidebar is icon-only */
+    --page-max-width: 80rem;
   }
 }
-
-/* Responsive content container — used by PageHeader inner div + page content divs */
 .page-content {
   max-width: var(--page-max-width);
   margin-left: auto;
@@ -77,42 +237,49 @@ button, a {
   transition: max-width 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* GitHub Markdown preview prose styles */
+/* ── Glass utility ─────────────────────────────────────────────── */
+.glass {
+  background: var(--color-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── Markdown preview prose ────────────────────────────────────── */
 .md-preview {
-  color: #1c1917;
+  color: var(--color-primary);
   line-height: 1.7;
   font-size: 1rem;
 }
-.md-preview h1 { font-size: 2em; font-weight: 700; border-bottom: 1px solid #e7e5e4; padding-bottom: 0.3em; margin: 1em 0 0.5em; }
-.md-preview h2 { font-size: 1.5em; font-weight: 600; border-bottom: 1px solid #e7e5e4; padding-bottom: 0.25em; margin: 1em 0 0.5em; }
+.md-preview h1 { font-size: 2em; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 0.3em; margin: 1em 0 0.5em; }
+.md-preview h2 { font-size: 1.5em; font-weight: 600; border-bottom: 1px solid var(--color-border); padding-bottom: 0.25em; margin: 1em 0 0.5em; }
 .md-preview h3 { font-size: 1.25em; font-weight: 600; margin: 1em 0 0.4em; }
 .md-preview h4, .md-preview h5, .md-preview h6 { font-size: 1em; font-weight: 600; margin: 1em 0 0.3em; }
 .md-preview p { margin: 0.75em 0; }
-.md-preview a { color: #57534e; text-decoration: underline; text-underline-offset: 2px; }
-.md-preview a:hover { color: #1c1917; }
+.md-preview a { color: var(--color-secondary); text-decoration: underline; text-underline-offset: 2px; }
+.md-preview a:hover { color: var(--color-primary); }
 .md-preview ul { list-style: disc; padding-left: 1.5em; margin: 0.5em 0; }
 .md-preview ol { list-style: decimal; padding-left: 1.5em; margin: 0.5em 0; }
 .md-preview li { margin: 0.25em 0; }
 .md-preview li input[type="checkbox"] { margin-right: 0.4em; }
 .md-preview blockquote {
-  border-left: 4px solid #d6d3d1;
+  border-left: 4px solid var(--color-border-strong);
   padding: 0.25em 1em;
   margin: 0.75em 0;
-  color: #78716c;
-  background: #fafaf9;
+  color: var(--color-muted);
+  background: var(--color-canvas);
   border-radius: 0 0.375rem 0.375rem 0;
 }
 .md-preview code:not(pre code) {
-  background: #f5f5f4;
-  border: 1px solid #e7e5e4;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   border-radius: 0.25rem;
   padding: 0.1em 0.4em;
   font-size: 0.875em;
   font-family: var(--font-geist-mono), monospace;
-  color: #292524;
+  color: var(--color-surface-raised);
 }
 .md-preview pre {
-  background: #1c1917;
+  background: #1c1917; /* intentionally fixed — code block surface */
   border-radius: 0.5rem;
   padding: 1rem 1.25rem;
   overflow-x: auto;
@@ -133,87 +300,42 @@ button, a {
   font-size: 0.9em;
 }
 .md-preview th {
-  background: #f5f5f4;
+  background: var(--color-surface-subtle);
   font-weight: 600;
-  border: 1px solid #d6d3d1;
+  border: 1px solid var(--color-border-strong);
   padding: 0.5em 0.75em;
   text-align: left;
 }
 .md-preview td {
-  border: 1px solid #d6d3d1;
+  border: 1px solid var(--color-border-strong);
   padding: 0.5em 0.75em;
 }
-.md-preview tr:nth-child(even) td { background: #fafaf9; }
+.md-preview tr:nth-child(even) td { background: var(--color-canvas); }
 .md-preview img { max-width: 100%; border-radius: 0.5rem; margin: 0.5em 0; }
-.md-preview hr { border: none; border-top: 1px solid #e7e5e4; margin: 1.5em 0; }
-.md-preview del { color: #a8a29e; }
+.md-preview hr { border: none; border-top: 1px solid var(--color-border); margin: 1.5em 0; }
+.md-preview del { color: var(--color-muted); }
 
-/* Elegant scrollbar for desktop */
-@media (min-width: 1024px) {
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: #d6d3d1;
-    border-radius: 4px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: #a8a29e;
-  }
-}
-
-/* Glassmorphism effect */
-.glass {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-/* Slow continuous spin (for logo) */
+/* ── Animations ─────────────────────────────────────────────────── */
 @keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
-
 .animate-spin-slow {
   animation: spin-slow 3s linear infinite;
 }
 
-/* Continuous spin for loading states */
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
-
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
-/* Reverse spin for loading ring */
 @keyframes spin-reverse {
-  from {
-    transform: rotate(360deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
 }
-
 .animate-spin-reverse {
   animation: spin-reverse 1.5s linear infinite;
 }

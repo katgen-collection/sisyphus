@@ -132,16 +132,16 @@ export function PdfToImages() {
       >
         {file ? (
           <div className="text-center">
-            <div className="mb-2 w-12 h-12 mx-auto rounded-lg bg-stone-200 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-stone-600" />
+            <div className="mb-2 w-12 h-12 mx-auto rounded-lg bg-surface-muted flex items-center justify-center">
+              <FileText className="w-6 h-6 text-secondary" />
             </div>
-            <p className="text-stone-700 font-medium truncate max-w-xs">{file.file.name}</p>
+            <p className="text-primary font-medium truncate max-w-xs">{file.file.name}</p>
             {isLoading ? (
-              <p className="text-stone-400 text-sm flex items-center justify-center gap-2">
+              <p className="text-muted text-sm flex items-center justify-center gap-2">
                 <Loader2 className="w-3 h-3 animate-spin" /> Loading...
               </p>
             ) : numPages ? (
-              <p className="text-stone-400 text-sm">{numPages} page{numPages !== 1 ? "s" : ""}</p>
+              <p className="text-muted text-sm">{numPages} page{numPages !== 1 ? "s" : ""}</p>
             ) : null}
           </div>
         ) : undefined}
@@ -149,8 +149,8 @@ export function PdfToImages() {
 
       {/* Scale selector */}
       {file && numPages && (
-        <div className="bg-stone-50 rounded-xl p-5">
-          <label className="block text-sm font-medium text-stone-700 mb-2">
+        <div className="bg-surface-subtle rounded-xl p-5">
+          <label className="block text-sm font-medium text-primary mb-2">
             Output Quality
           </label>
           <div className="flex gap-2">
@@ -165,15 +165,15 @@ export function PdfToImages() {
                 disabled={isProcessing}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${
                   scale === s.value
-                    ? "bg-stone-800 text-stone-50"
-                    : "bg-stone-200 text-stone-600 hover:bg-stone-300"
+                    ? "bg-primary text-canvas"
+                    : "bg-surface-muted text-secondary hover:bg-border-strong"
                 } disabled:opacity-50`}
               >
                 {s.label}
               </button>
             ))}
           </div>
-          <p className="text-xs text-stone-400 mt-2">
+          <p className="text-xs text-muted mt-2">
             Higher quality = larger file sizes
           </p>
         </div>
@@ -181,21 +181,21 @@ export function PdfToImages() {
 
       {/* Preview info */}
       {numPages && numPages > 0 && (
-        <div className="bg-stone-50 rounded-xl p-4">
-          <p className="text-sm text-stone-500 mb-3">
+        <div className="bg-surface-subtle rounded-xl p-4">
+          <p className="text-sm text-secondary mb-3">
             {numPages} page{numPages !== 1 ? "s" : ""} will be exported as PNG images
           </p>
           <div className="grid grid-cols-4 gap-2">
             {Array.from({ length: Math.min(numPages, 4) }, (_, i) => (
               <div
                 key={i + 1}
-                className="aspect-3/4 bg-white rounded border border-stone-200 flex items-center justify-center text-stone-400 text-sm"
+                className="aspect-3/4 bg-surface rounded border border-border flex items-center justify-center text-muted text-sm"
               >
                 {i + 1}
               </div>
             ))}
             {numPages > 4 && (
-              <div className="aspect-3/4 bg-stone-100 rounded flex items-center justify-center text-stone-400 text-sm">
+              <div className="aspect-3/4 bg-surface-subtle rounded flex items-center justify-center text-muted text-sm">
                 +{numPages - 4}
               </div>
             )}
@@ -210,14 +210,14 @@ export function PdfToImages() {
       )}
 
       {state === "error" && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 flex items-center gap-2">
+        <div className="bg-error-bg border border-error-border rounded-lg px-4 py-3 text-error-text flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           {error}
         </div>
       )}
 
       {state === "done" && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700">
+        <div className="bg-success-bg border border-success-border rounded-lg px-4 py-3 text-success-text">
           Images exported! ZIP download started.
         </div>
       )}

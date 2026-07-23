@@ -142,8 +142,8 @@ export function FileUploader({
         border-2 border-dashed
         transition-all duration-200 cursor-pointer
         ${isDragging
-          ? "border-stone-400 bg-stone-100"
-          : "border-stone-300 bg-stone-50 hover:border-stone-400 hover:bg-stone-100"
+          ? "border-border-strong bg-surface-subtle"
+          : "border-border bg-surface-subtle hover:border-border-strong hover:bg-surface-muted"
         }
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}
       `}
@@ -161,13 +161,13 @@ export function FileUploader({
       {children ?? (
         <>
           {/* Boulder icon */}
-          <div className="mb-4 w-16 h-16 rounded-full bg-linear-to-br from-stone-300 to-stone-400 shadow-inner flex items-center justify-center">
-            <Download className="w-8 h-8 text-stone-600" />
+          <div className="mb-4 w-16 h-16 rounded-full bg-linear-to-br from-surface-muted to-border flex items-center justify-center">
+            <Download className="w-8 h-8 text-secondary" />
           </div>
-          <p className="text-stone-600 font-medium">
+          <p className="text-secondary font-medium">
             Drop files here or click to browse
           </p>
-          <p className="text-stone-400 text-sm mt-1">
+          <p className="text-muted text-sm mt-1">
             Max {maxSizeMB >= 1024 ? `${maxSizeMB / 1024}GB` : `${maxSizeMB}MB`} per file
           </p>
         </>
@@ -175,7 +175,7 @@ export function FileUploader({
     </div>
 
     {rejection && (
-      <p role="alert" className="text-sm text-red-600 px-1">
+      <p role="alert" className="text-sm text-error-text px-1">
         {rejection}
       </p>
     )}

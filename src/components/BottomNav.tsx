@@ -6,7 +6,7 @@ import { navItems } from "./navItems";
 
 /**
  * Floating bottom navigation bar for mobile.
- * Semi-transparent white with glassmorphism effect.
+ * Glass surface with backdrop blur.
  * Hidden on desktop (lg breakpoint).
  */
 export function BottomNav() {
@@ -14,7 +14,7 @@ export function BottomNav() {
 
   return (
     <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-50">
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-stone-200/80 shadow-lg shadow-stone-200/50">
+      <div className="glass rounded-2xl border border-border shadow-lg shadow-stone-200/20 dark:shadow-stone-950/20">
         <div className="flex items-center justify-around h-16">
           {navItems.map(({ href, icon: Icon, label }) => {
             const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
@@ -26,9 +26,9 @@ export function BottomNav() {
                   flex flex-col items-center justify-center gap-1
                   flex-1 min-w-0 h-full px-1 py-2
                   transition-all duration-200
-                  ${isActive 
-                    ? "text-stone-900" 
-                    : "text-stone-400 hover:text-stone-600 active:scale-95"
+                  ${isActive
+                    ? "text-primary"
+                    : "text-muted hover:text-secondary active:scale-95"
                   }
                 `}
               >

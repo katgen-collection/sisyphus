@@ -1,0 +1,5 @@
+const themeScript = `(function(){try{var key="sisyphus-theme",light="#fafaf9",dark="#1c1917",value;try{value=localStorage.getItem(key)}catch(_){value=null}var theme=value==="light"||value==="dark"?value:"light";if(value!=="light"&&value!=="dark"){try{theme=matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}catch(_){theme="light"}}var root=document.documentElement;root.dataset.theme=theme;var metas=document.head.querySelectorAll('meta[name="theme-color"]'),meta;for(var i=0;i<metas.length;i++){if(metas[i].hasAttribute("data-sisyphus-theme-color")){meta=metas[i];break}}meta=meta||metas[0];if(!meta){meta=document.createElement("meta");meta.name="theme-color";document.head.appendChild(meta)}meta.setAttribute("data-sisyphus-theme-color","");for(var j=0;j<metas.length;j++){if(metas[j]!==meta)metas[j].parentNode.removeChild(metas[j])}meta.content=theme==="dark"?dark:light}catch(_){}})();`;
+
+export function ThemeScript() {
+  return <script dangerouslySetInnerHTML={{ __html: themeScript }} />;
+}

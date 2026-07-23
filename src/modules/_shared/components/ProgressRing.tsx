@@ -31,7 +31,7 @@ export function ProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-stone-200"
+          className="text-surface-muted"
         />
         {/* Progress arc */}
         <circle
@@ -44,10 +44,10 @@ export function ProgressRing({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="text-stone-600 transition-all duration-300"
+          className="text-secondary transition-all duration-300"
         />
       </svg>
-      <span className="absolute text-xs font-medium text-stone-600">
+      <span className="absolute text-xs font-medium text-secondary">
         {Math.round(progress)}%
       </span>
     </div>

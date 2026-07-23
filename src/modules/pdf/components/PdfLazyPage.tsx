@@ -100,7 +100,7 @@ export function PdfLazyPage({
           draggable={false}
         />
       ) : (
-        <div className="w-full h-full bg-stone-100 animate-pulse" />
+        <div className="w-full h-full bg-surface-subtle animate-pulse" />
       )}
     </div>
   );

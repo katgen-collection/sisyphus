@@ -23,7 +23,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center px-6 py-12 bg-[var(--background)]">
+    <div className="fixed inset-0 flex items-center justify-center px-6 py-12 bg-canvas">
       <div className="max-w-md w-full text-center">
         <div className="mb-8 flex justify-center">
           <SpinningLogo
@@ -34,26 +34,26 @@ export default function Error({
           />
         </div>
 
-        <h1 className="text-2xl font-semibold text-stone-700 mb-4">
+        <h1 className="text-2xl font-semibold text-secondary mb-4">
           The boulder slipped
         </h1>
 
-        <p className="text-stone-500 mb-8 leading-relaxed">
+        <p className="text-secondary mb-8 leading-relaxed">
           Something went wrong while processing that. Your files never left your
           device — nothing was uploaded. You can try again, or head home and
           start fresh.
         </p>
 
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="h-px w-12 bg-stone-300" />
-          <div className="w-2 h-2 rounded-full bg-stone-300" />
-          <div className="h-px w-12 bg-stone-300" />
+          <div className="h-px w-12 bg-border-strong" />
+          <div className="w-2 h-2 rounded-full bg-border-strong" />
+          <div className="h-px w-12 bg-border-strong" />
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             onClick={reset}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-stone-800 text-white rounded-xl font-medium hover:bg-stone-700 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-canvas rounded-xl font-medium hover:opacity-90 transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
             Try Again
@@ -61,14 +61,14 @@ export default function Error({
 
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-stone-100 text-stone-700 rounded-xl font-medium hover:bg-stone-200 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-surface-subtle text-primary rounded-xl font-medium hover:bg-surface-muted transition-colors"
           >
             <Home className="w-4 h-4" />
             Return Home
           </Link>
         </div>
 
-        <p className="mt-12 text-sm text-stone-400 italic">
+        <p className="mt-12 text-sm text-muted italic">
           &quot;One must imagine Sisyphus happy.&quot;
         </p>
       </div>

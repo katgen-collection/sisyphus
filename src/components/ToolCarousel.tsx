@@ -90,7 +90,7 @@ export function ToolCarousel<T extends string>({
       {canScrollLeft && (
         <button
           onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 shadow-md border border-stone-200 text-stone-600 hover:bg-white hover:text-stone-800 transition-colors"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-surface/90 shadow-md border border-border text-secondary hover:bg-surface hover:text-primary transition-colors"
           aria-label="Scroll left"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -111,25 +111,25 @@ export function ToolCarousel<T extends string>({
             className={`
               shrink-0 flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all duration-200
               ${activeTab === tab.id
-                ? "border-stone-300 bg-white shadow-sm"
-                : "border-stone-200 bg-stone-50 hover:border-stone-300 hover:bg-white"
+                ? "border-border-strong bg-surface shadow-sm"
+                : "border-border bg-surface-subtle hover:border-border-strong hover:bg-surface"
               }
             `}
           >
             <span
               className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                 activeTab === tab.id
-                  ? "bg-stone-800 text-stone-50"
-                  : "bg-stone-200 text-stone-600"
+                  ? "bg-primary text-canvas"
+                  : "bg-surface-muted text-secondary"
               }`}
             >
               {tab.icon}
             </span>
             <div className="text-left">
-              <div className="text-sm font-semibold text-stone-700 whitespace-nowrap">
+              <div className="text-sm font-semibold text-primary whitespace-nowrap">
                 {tab.label}
               </div>
-              <div className="text-xs text-stone-500 whitespace-nowrap">
+              <div className="text-xs text-secondary whitespace-nowrap">
                 {tab.description}
               </div>
             </div>
@@ -141,7 +141,7 @@ export function ToolCarousel<T extends string>({
       {canScrollRight && (
         <button
           onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 shadow-md border border-stone-200 text-stone-600 hover:bg-white hover:text-stone-800 transition-colors"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-surface/90 shadow-md border border-border text-secondary hover:bg-surface hover:text-primary transition-colors"
           aria-label="Scroll right"
         >
           <ChevronRight className="w-4 h-4" />

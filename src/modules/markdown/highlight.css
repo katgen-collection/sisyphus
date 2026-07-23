@@ -1,0 +1,190 @@
+/* highlight.js GitHub theme — local copy scoped to .md-preview */
+/* Source: highlight.js/scss/github.scss, licensed BSD-3-Clause */
+
+.md-preview .hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  color: #24292e;
+  background: #fff;
+}
+
+.md-preview .hljs-doctag,
+.md-preview .hljs-keyword,
+.md-preview .hljs-meta .hljs-keyword,
+.md-preview .hljs-template-tag,
+.md-preview .hljs-template-variable,
+.md-preview .hljs-type,
+.md-preview .hljs-variable.language_ {
+  color: #d73a49;
+}
+
+.md-preview .hljs-title,
+.md-preview .hljs-title.class_,
+.md-preview .hljs-title.class_.inherited__,
+.md-preview .hljs-title.function_ {
+  color: #6f42c1;
+}
+
+.md-preview .hljs-attr,
+.md-preview .hljs-attribute,
+.md-preview .hljs-literal,
+.md-preview .hljs-meta,
+.md-preview .hljs-number,
+.md-preview .hljs-operator,
+.md-preview .hljs-variable,
+.md-preview .hljs-selector-attr,
+.md-preview .hljs-selector-class,
+.md-preview .hljs-selector-id {
+  color: #005cc5;
+}
+
+.md-preview .hljs-regexp,
+.md-preview .hljs-string,
+.md-preview .hljs-meta .hljs-string {
+  color: #032f62;
+}
+
+.md-preview .hljs-built_in,
+.md-preview .hljs-symbol {
+  color: #e36209;
+}
+
+.md-preview .hljs-comment,
+.md-preview .hljs-code,
+.md-preview .hljs-formula {
+  color: #6a737d;
+}
+
+.md-preview .hljs-name,
+.md-preview .hljs-quote,
+.md-preview .hljs-selector-tag,
+.md-preview .hljs-selector-pseudo {
+  color: #22863a;
+}
+
+.md-preview .hljs-subst {
+  color: #24292e;
+}
+
+.md-preview .hljs-section {
+  color: #005cc5;
+  font-weight: bold;
+}
+
+.md-preview .hljs-bullet {
+  color: #735c0f;
+}
+
+.md-preview .hljs-emphasis {
+  color: #24292e;
+  font-style: italic;
+}
+
+.md-preview .hljs-strong {
+  color: #24292e;
+  font-weight: bold;
+}
+
+.md-preview .hljs-addition {
+  color: #22863a;
+  background-color: #f0fff4;
+}
+
+.md-preview .hljs-deletion {
+  color: #b31d28;
+  background-color: #ffeef0;
+}
+
+/* Dark theme adaptation — keep code colors legible on dark surfaces */
+html[data-theme="dark"] .md-preview .hljs {
+  color: #e6edf3;
+  background: #0d1117;
+}
+
+html[data-theme="dark"] .md-preview .hljs-doctag,
+html[data-theme="dark"] .md-preview .hljs-keyword,
+html[data-theme="dark"] .md-preview .hljs-meta .hljs-keyword,
+html[data-theme="dark"] .md-preview .hljs-template-tag,
+html[data-theme="dark"] .md-preview .hljs-template-variable,
+html[data-theme="dark"] .md-preview .hljs-type,
+html[data-theme="dark"] .md-preview .hljs-variable.language_ {
+  color: #ff7b72;
+}
+
+html[data-theme="dark"] .md-preview .hljs-title,
+html[data-theme="dark"] .md-preview .hljs-title.class_,
+html[data-theme="dark"] .md-preview .hljs-title.class_.inherited__,
+html[data-theme="dark"] .md-preview .hljs-title.function_ {
+  color: #d2a8ff;
+}
+
+html[data-theme="dark"] .md-preview .hljs-attr,
+html[data-theme="dark"] .md-preview .hljs-attribute,
+html[data-theme="dark"] .md-preview .hljs-literal,
+html[data-theme="dark"] .md-preview .hljs-meta,
+html[data-theme="dark"] .md-preview .hljs-number,
+html[data-theme="dark"] .md-preview .hljs-operator,
+html[data-theme="dark"] .md-preview .hljs-variable,
+html[data-theme="dark"] .md-preview .hljs-selector-attr,
+html[data-theme="dark"] .md-preview .hljs-selector-class,
+html[data-theme="dark"] .md-preview .hljs-selector-id {
+  color: #79c0ff;
+}
+
+html[data-theme="dark"] .md-preview .hljs-regexp,
+html[data-theme="dark"] .md-preview .hljs-string,
+html[data-theme="dark"] .md-preview .hljs-meta .hljs-string {
+  color: #a5d6ff;
+}
+
+html[data-theme="dark"] .md-preview .hljs-built_in,
+html[data-theme="dark"] .md-preview .hljs-symbol {
+  color: #ffa657;
+}
+
+html[data-theme="dark"] .md-preview .hljs-comment,
+html[data-theme="dark"] .md-preview .hljs-code,
+html[data-theme="dark"] .md-preview .hljs-formula {
+  color: #8b949e;
+}
+
+html[data-theme="dark"] .md-preview .hljs-name,
+html[data-theme="dark"] .md-preview .hljs-quote,
+html[data-theme="dark"] .md-preview .hljs-selector-tag,
+html[data-theme="dark"] .md-preview .hljs-selector-pseudo {
+  color: #7ee787;
+}
+
+html[data-theme="dark"] .md-preview .hljs-subst {
+  color: #e6edf3;
+}
+
+html[data-theme="dark"] .md-preview .hljs-section {
+  color: #79c0ff;
+  font-weight: bold;
+}
+
+html[data-theme="dark"] .md-preview .hljs-bullet {
+  color: #f2cc60;
+}
+
+html[data-theme="dark"] .md-preview .hljs-emphasis {
+  color: #e6edf3;
+  font-style: italic;
+}
+
+html[data-theme="dark"] .md-preview .hljs-strong {
+  color: #e6edf3;
+  font-weight: bold;
+}
+
+html[data-theme="dark"] .md-preview .hljs-addition {
+  color: #7ee787;
+  background-color: rgba(46, 160, 67, 0.15);
+}
+
+html[data-theme="dark"] .md-preview .hljs-deletion {
+  color: #ff7b72;
+  background-color: rgba(248, 81, 73, 0.15);
+}

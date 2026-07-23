@@ -17,8 +17,8 @@ interface SpinningLogoProps {
  * - spinOnHover: Hover to start spinning, unhover to stop. Tap to spin, untap to stop.
  * - spinning: Force continuous slow spin (for loading states).
  */
-export function SpinningLogo({ 
-  size = 128, 
+export function SpinningLogo({
+  size = 128,
   className = "",
   spinOnHover = true,
   spinning = false,
@@ -29,7 +29,7 @@ export function SpinningLogo({
   const shouldSpin = spinning || (spinOnHover && (isHovering || isTouching));
 
   return (
-    <div 
+    <div
       className={`relative select-none ${spinOnHover ? "cursor-pointer" : ""} ${className}`}
       onMouseEnter={() => spinOnHover && setIsHovering(true)}
       onMouseLeave={() => spinOnHover && setIsHovering(false)}
@@ -40,7 +40,7 @@ export function SpinningLogo({
       aria-label="Sisyphus logo - spinning boulder"
     >
       <Image
-        src="/assets/logo/logo_svg.svg"
+        src="/assets/logo/logo-transparent-512.png"
         alt="Sisyphus"
         width={size}
         height={size}

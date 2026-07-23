@@ -11,21 +11,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: `
-    bg-stone-800 text-stone-50 
-    hover:bg-stone-700 active:bg-stone-900
-    disabled:bg-stone-300
-  `,
-  secondary: `
-    bg-stone-200 text-stone-800 
-    hover:bg-stone-300 active:bg-stone-400
-    disabled:bg-stone-100 disabled:text-stone-400
-  `,
-  ghost: `
-    bg-transparent text-stone-600 
-    hover:bg-stone-100 active:bg-stone-200
-    disabled:text-stone-300
-  `,
+  primary:
+    "bg-primary text-canvas hover:opacity-90 active:opacity-80 disabled:bg-surface-muted disabled:text-muted",
+  secondary:
+    "bg-surface-muted text-primary hover:bg-border-strong active:bg-surface-muted disabled:bg-surface-subtle disabled:text-muted",
+  ghost:
+    "bg-transparent text-secondary hover:bg-surface-subtle active:bg-surface-muted disabled:text-muted",
 };
 
 /**

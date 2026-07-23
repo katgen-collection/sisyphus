@@ -78,11 +78,11 @@ export function PdfCompress() {
       >
         {file ? (
           <div className="text-center">
-            <div className="mb-2 w-12 h-12 mx-auto rounded-lg bg-stone-200 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-stone-600" />
+            <div className="mb-2 w-12 h-12 mx-auto rounded-lg bg-surface-muted flex items-center justify-center">
+              <FileText className="w-6 h-6 text-secondary" />
             </div>
-            <p className="text-stone-700 font-medium truncate max-w-xs">{file.file.name}</p>
-            <p className="text-stone-400 text-sm">
+            <p className="text-primary font-medium truncate max-w-xs">{file.file.name}</p>
+            <p className="text-muted text-sm">
               {(file.file.size / (1024 * 1024)).toFixed(2)} MB
             </p>
           </div>
@@ -90,8 +90,8 @@ export function PdfCompress() {
       </FileUploader>
 
       {file && (
-        <div className="bg-stone-50 rounded-xl p-5 space-y-3">
-          <p className="text-sm font-medium text-stone-700">Compression level</p>
+        <div className="bg-surface-subtle rounded-xl p-5 space-y-3">
+          <p className="text-sm font-medium text-primary">Compression level</p>
           <div className="grid grid-cols-3 gap-2">
             {LEVELS.map((option) => {
               const active = level === option.id;
@@ -105,20 +105,20 @@ export function PdfCompress() {
                     rounded-lg border p-3 text-left transition-colors
                     disabled:opacity-50 disabled:cursor-not-allowed
                     ${active
-                      ? "border-stone-800 bg-stone-100 text-stone-900"
-                      : "border-stone-200 bg-white text-stone-600 hover:border-stone-300"
+                      ? "border-primary bg-surface-subtle text-primary"
+                      : "border-border bg-surface text-secondary hover:border-border-strong"
                     }
                   `}
                 >
                   <span className="block text-sm font-medium">{option.label}</span>
-                  <span className="block text-xs text-stone-400 mt-0.5">
+                  <span className="block text-xs text-muted mt-0.5">
                     {option.description}
                   </span>
                 </button>
               );
             })}
           </div>
-          <p className="text-xs text-stone-400">
+          <p className="text-xs text-muted">
             Recompresses images to shrink the file. Text stays selectable.
           </p>
         </div>
@@ -131,13 +131,13 @@ export function PdfCompress() {
       )}
 
       {state === "error" && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700">
+        <div className="bg-error-bg border border-error-border rounded-lg px-4 py-3 text-error-text">
           {error}
         </div>
       )}
 
       {state === "done" && stats && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700 space-y-1">
+        <div className="bg-success-bg border border-success-border rounded-lg px-4 py-3 text-success-text space-y-1">
           {shrank ? (
             <p className="font-medium">
               {formatMB(stats.originalSize)} → {formatMB(stats.compressedSize)} ({savedPct}% smaller)
@@ -145,13 +145,13 @@ export function PdfCompress() {
           ) : (
             <p className="font-medium">Already optimized — couldn&apos;t shrink this file further.</p>
           )}
-          <p className="text-sm text-green-600">
+          <p className="text-sm text-success-text/80">
             Recompressed {stats.imagesRecompressed} of {stats.imagesTotal} images
             {stats.duplicatesRemoved > 0 &&
               `, merged ${stats.duplicatesRemoved} duplicates`}
           </p>
           {stats.skipped.length > 0 && (
-            <p className="text-xs text-green-600/80">
+            <p className="text-xs text-success-text/60">
               Skipped:{" "}
               {stats.skipped
                 .map((s) => `${s.count} ${SKIP_LABELS[s.reason]}`)

@@ -255,22 +255,23 @@ export function CropEditor({ file, crop, onChange, onDimensions, onClose }: Crop
   };
 
   return (
-    <div className="min-w-0 w-full max-w-full rounded-2xl border border-stone-300 bg-white p-4 shadow-lg" role="dialog" aria-label={`Crop ${file.name}`}>
+    <div className="min-w-0 w-full max-w-full rounded-2xl border border-border bg-surface p-4 shadow-lg" role="dialog" aria-label={`Crop ${file.name}`}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate font-semibold text-stone-800">Crop {file.name}</h3>
-          <p className="text-sm text-stone-500">Drag the frame to move it, or pull any handle to resize.</p>
+          <h3 className="truncate font-semibold text-primary">Crop {file.name}</h3>
+          <p className="text-sm text-secondary">Drag the frame to move it, or pull any handle to resize.</p>
         </div>
         <Button type="button" variant="ghost" onClick={onClose} className="shrink-0 px-3">Done</Button>
       </div>
 
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <p className="font-medium text-stone-800" aria-live="polite">
+        <p className="font-medium text-primary" aria-live="polite">
           {ratioLabel} · {selected.width} × {selected.height} px
         </p>
-        <p className="hidden text-xs text-stone-500 sm:block">Only the area inside the frame is kept</p>
+        <p className="hidden text-xs text-secondary sm:block">Only the area inside the frame is kept</p>
       </div>
 
+      {/* Dark viewport preserved for crop editor canvas */}
       <div
         ref={viewportRef}
         className="flex h-[min(62dvh,32rem)] min-h-72 w-full items-center justify-center overflow-hidden rounded-xl bg-stone-950 p-0"
@@ -342,7 +343,7 @@ export function CropEditor({ file, crop, onChange, onDimensions, onClose }: Crop
 
       <div className="mt-4 grid gap-4">
         <div className="min-w-0">
-          <p className="mb-2 text-sm font-medium text-stone-700">Aspect ratio</p>
+          <p className="mb-2 text-sm font-medium text-primary">Aspect ratio</p>
           <div className="-mx-1 flex max-w-full gap-2 overflow-x-auto px-1 pb-2 sm:flex-wrap sm:overflow-visible" role="group" aria-label="Aspect ratio presets">
             {RATIO_PRESETS.map((preset) => (
               <button
@@ -353,8 +354,8 @@ export function CropEditor({ file, crop, onChange, onDimensions, onClose }: Crop
                 onClick={() => applyRatio(preset.value)}
                 className={`min-h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors ${
                   ratio === preset.value
-                    ? "border-stone-800 bg-stone-800 text-white"
-                    : "border-stone-300 bg-white text-stone-700 hover:bg-stone-100"
+                    ? "border-primary bg-primary text-canvas"
+                    : "border-border bg-surface text-primary hover:bg-surface-subtle"
                 }`}
               >
                 {preset.label}
@@ -363,11 +364,11 @@ export function CropEditor({ file, crop, onChange, onDimensions, onClose }: Crop
           </div>
         </div>
 
-        <details className="rounded-xl border border-stone-200 bg-stone-50">
-          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-stone-700">Exact crop</summary>
-          <div className="grid grid-cols-2 gap-3 border-t border-stone-200 p-4 sm:grid-cols-4">
+        <details className="rounded-xl border border-border bg-surface-subtle">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-primary">Exact crop</summary>
+          <div className="grid grid-cols-2 gap-3 border-t border-border p-4 sm:grid-cols-4">
             {(["x", "y", "width", "height"] as const).map((field) => (
-              <label key={field} className="grid gap-1 text-sm capitalize text-stone-600">
+              <label key={field} className="grid gap-1 text-sm capitalize text-secondary">
                 {field}
                 <input
                   type="number"
@@ -376,7 +377,7 @@ export function CropEditor({ file, crop, onChange, onDimensions, onClose }: Crop
                   max={field === "x" || field === "width" ? dimensions.width : dimensions.height}
                   value={selected[field]}
                   onChange={(event) => updateExact(field, Number(event.target.value))}
-                  className="min-h-11 rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-800"
+                  className="min-h-11 rounded-lg border border-border bg-surface px-3 py-2 text-primary"
                 />
               </label>
             ))}

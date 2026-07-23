@@ -181,11 +181,11 @@ export function VideoConverter() {
       {/* Capability badge */}
       {state !== "loading" && (
         <div className="flex items-center gap-2 text-xs">
-          <Cpu className="w-3.5 h-3.5 text-stone-400" />
+          <Cpu className="w-3.5 h-3.5 text-muted" />
           {isMultiThreaded ? (
-            <span className="text-green-600 font-medium">Multi-threaded ✓</span>
+            <span className="text-success-text font-medium">Multi-threaded ✓</span>
           ) : (
-            <span className="text-amber-600 font-medium">Single-threaded (limited browser)</span>
+            <span className="text-warning-text font-medium">Single-threaded (limited browser)</span>
           )}
         </div>
       )}
@@ -202,18 +202,18 @@ export function VideoConverter() {
       >
         {file ? (
           <div className="text-center">
-            <div className="mb-2 w-12 h-12 mx-auto rounded-full bg-stone-200 flex items-center justify-center">
-              <Video className="w-6 h-6 text-stone-600" />
+            <div className="mb-2 w-12 h-12 mx-auto rounded-full bg-surface-muted flex items-center justify-center">
+              <Video className="w-6 h-6 text-secondary" />
             </div>
-            <p className="text-stone-700 font-medium truncate max-w-xs">{file.file.name}</p>
-            <p className="text-stone-400 text-sm">
+            <p className="text-primary font-medium truncate max-w-xs">{file.file.name}</p>
+            <p className="text-muted text-sm">
               {(file.file.size / (1024 * 1024)).toFixed(2)} MB
             </p>
           </div>
         ) : undefined}
       </FileUploader>
 
-      {/* Video Preview */}
+      {/* Video Preview — dark background preserved for media pixels */}
       {videoUrl && (
         <div className="bg-stone-900 rounded-xl overflow-hidden">
           <video
@@ -227,7 +227,7 @@ export function VideoConverter() {
 
       {/* Large file warning */}
       {isLargeFile && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-700 flex items-center gap-2">
+        <div className="bg-warning-bg border border-warning-border rounded-lg px-4 py-3 text-warning-text flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span className="text-sm">
             Large file ({(file.file.size / (1024 * 1024)).toFixed(0)} MB) — processing may take a while{!isMultiThreaded ? " on this device" : ""}.
@@ -237,12 +237,12 @@ export function VideoConverter() {
 
       {/* Tab-specific options */}
       {file && (
-        <div className="bg-stone-50 rounded-xl p-5 space-y-5">
+        <div className="bg-surface-subtle rounded-xl p-5 space-y-5">
           {/* Convert Tab */}
           {activeTab === "convert" && (
             <>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
+                <label className="block text-sm font-medium text-primary mb-2">
                   Output Format
                 </label>
                 <div className="flex gap-2">
@@ -252,8 +252,8 @@ export function VideoConverter() {
                       onClick={() => setOutputFormat(fmt)}
                       disabled={isProcessing}
                       className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wide transition-colors duration-150 ${outputFormat === fmt
-                          ? "bg-stone-800 text-stone-50"
-                          : "bg-stone-200 text-stone-600 hover:bg-stone-300"
+                          ? "bg-primary text-canvas"
+                          : "bg-surface-muted text-secondary hover:bg-border-strong"
                         } disabled:opacity-50`}
                     >
                       {fmt}
@@ -265,7 +265,7 @@ export function VideoConverter() {
               {/* GIF-specific options */}
               {outputFormat === "gif" && (
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                  <label className="block text-sm font-medium text-primary mb-2">
                     Frame Rate (FPS)
                   </label>
                   <div className="flex gap-2">
@@ -275,15 +275,15 @@ export function VideoConverter() {
                         onClick={() => setGifFps(fps)}
                         disabled={isProcessing}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${gifFps === fps
-                            ? "bg-stone-800 text-stone-50"
-                            : "bg-stone-200 text-stone-600 hover:bg-stone-300"
+                            ? "bg-primary text-canvas"
+                            : "bg-surface-muted text-secondary hover:bg-border-strong"
                           } disabled:opacity-50`}
                       >
                         {fps} FPS
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-stone-400 mt-2">
+                  <p className="text-xs text-muted mt-2">
                     Lower FPS = smaller file size
                   </p>
                 </div>
@@ -294,7 +294,7 @@ export function VideoConverter() {
           {/* Compress Tab */}
           {activeTab === "compress" && (
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">
+              <label className="block text-sm font-medium text-primary mb-2">
                 Compression Level
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -304,8 +304,8 @@ export function VideoConverter() {
                     onClick={() => setCompression(key as CompressionLevel)}
                     disabled={isProcessing}
                     className={`px-3 py-3 rounded-lg text-sm transition-colors duration-150 ${compression === key
-                        ? "bg-stone-800 text-stone-50"
-                        : "bg-stone-200 text-stone-600 hover:bg-stone-300"
+                        ? "bg-primary text-canvas"
+                        : "bg-surface-muted text-secondary hover:bg-border-strong"
                       } disabled:opacity-50`}
                   >
                     <div className="font-medium">{key.charAt(0).toUpperCase() + key.slice(1)}</div>
@@ -313,7 +313,7 @@ export function VideoConverter() {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-stone-400 mt-3">
+              <p className="text-xs text-muted mt-3">
                 Higher compression = smaller file, lower quality
               </p>
             </div>
@@ -322,14 +322,14 @@ export function VideoConverter() {
           {/* Resize Tab */}
           {activeTab === "resize" && (
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">
+              <label className="block text-sm font-medium text-primary mb-2">
                 Resolution
               </label>
               <select
                 value={resolutionPreset}
                 onChange={(e) => setResolutionPreset(e.target.value as ResolutionPreset | "original")}
                 disabled={isProcessing}
-                className="w-full px-4 py-2 bg-white border border-stone-300 rounded-lg text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
+                className="w-full px-4 py-2 bg-surface border border-border rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-border-strong"
               >
                 <option value="original">Original (no resize)</option>
                 {Object.entries(RESOLUTION_PRESETS).map(([key, val]) => (
@@ -345,21 +345,21 @@ export function VideoConverter() {
                     onChange={(e) => setCustomWidth(Number(e.target.value))}
                     placeholder="Width"
                     disabled={isProcessing}
-                    className="flex-1 px-4 py-2 bg-white border border-stone-300 rounded-lg text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
+                    className="flex-1 px-4 py-2 bg-surface border border-border rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-border-strong"
                   />
-                  <span className="text-stone-400 self-center">×</span>
+                  <span className="text-muted self-center">×</span>
                   <input
                     type="number"
                     value={customHeight}
                     onChange={(e) => setCustomHeight(Number(e.target.value))}
                     placeholder="Height"
                     disabled={isProcessing}
-                    className="flex-1 px-4 py-2 bg-white border border-stone-300 rounded-lg text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
+                    className="flex-1 px-4 py-2 bg-surface border border-border rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-border-strong"
                   />
                 </div>
               )}
 
-              <p className="text-xs text-stone-400 mt-3">
+              <p className="text-xs text-muted mt-3">
                 Use -1 for width/height to maintain aspect ratio
               </p>
             </div>
@@ -368,7 +368,7 @@ export function VideoConverter() {
           {/* Audio Tab */}
           {activeTab === "audio" && (
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">
+              <label className="block text-sm font-medium text-primary mb-2">
                 Output Audio Format
               </label>
               <div className="flex gap-2">
@@ -378,15 +378,15 @@ export function VideoConverter() {
                     onClick={() => setAudioFormat(fmt)}
                     disabled={isProcessing}
                     className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wide transition-colors duration-150 ${audioFormat === fmt
-                        ? "bg-stone-800 text-stone-50"
-                        : "bg-stone-200 text-stone-600 hover:bg-stone-300"
+                        ? "bg-primary text-canvas"
+                        : "bg-surface-muted text-secondary hover:bg-border-strong"
                       } disabled:opacity-50`}
                   >
                     {fmt}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-stone-400 mt-2">
+              <p className="text-xs text-muted mt-2">
                 Extracts audio without re-encoding video
               </p>
             </div>
@@ -408,30 +408,30 @@ export function VideoConverter() {
       )}
 
       {state === "error" && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 flex items-center gap-2">
+        <div className="bg-error-bg border border-error-border rounded-lg px-4 py-3 text-error-text flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span className="flex-1">{error}</span>
         </div>
       )}
 
       {state === "done" && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700">
+        <div className="bg-success-bg border border-success-border rounded-lg px-4 py-3 text-success-text">
           Complete! Download started.
         </div>
       )}
 
-      {/* FFmpeg Logs (collapsible) */}
+      {/* FFmpeg Logs (collapsible) — dark terminal-style preserved */}
       {logs.length > 0 && (
-        <div className="border border-stone-200 rounded-lg overflow-hidden">
+        <div className="border border-border rounded-lg overflow-hidden">
           <button
             onClick={() => setShowLogs(!showLogs)}
-            className="w-full flex items-center justify-between px-4 py-2 bg-stone-50 hover:bg-stone-100 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2 bg-surface-subtle hover:bg-surface-muted transition-colors"
           >
-            <span className="flex items-center gap-2 text-sm text-stone-600">
+            <span className="flex items-center gap-2 text-sm text-secondary">
               <Terminal className="w-4 h-4" />
               FFmpeg Logs ({logs.length})
             </span>
-            <span className="text-stone-400">{showLogs ? "▲" : "▼"}</span>
+            <span className="text-muted">{showLogs ? "▲" : "▼"}</span>
           </button>
           {showLogs && (
             <div className="max-h-48 overflow-y-auto bg-stone-900 p-3">

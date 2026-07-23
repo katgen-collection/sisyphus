@@ -97,8 +97,6 @@ export function PdfMerge() {
                         color: colorClass,
                     });
 
-                    // Page thumbnails rasterize lazily (see PdfLazyPage) — the
-                    // doc proxy stays alive on the SourceFile for on-demand render.
                     for (let j = 0; j < pdfDoc.numPages; j++) {
                         const pageNumber = j + 1;
                         newPages.push({
@@ -157,11 +155,9 @@ export function PdfMerge() {
         touchStartY.current = touch.clientY;
         touchCurrentY.current = touch.clientY;
 
-        // Long press (300ms) to initiate drag
         touchTimerRef.current = setTimeout(() => {
             setTouchDragIndex(idx);
             setTouchOffset(0);
-            // Small haptic-like visual feedback
         }, 300);
     }, []);
 
@@ -169,7 +165,6 @@ export function PdfMerge() {
         const touch = e.touches[0];
         touchCurrentY.current = touch.clientY;
 
-        // If we haven't started dragging yet and moved too much, cancel long press
         if (touchDragIndex === null && touchTimerRef.current) {
             const dy = Math.abs(touch.clientY - touchStartY.current);
             if (dy > 10) {
@@ -180,12 +175,11 @@ export function PdfMerge() {
         }
 
         if (touchDragIndex === null) return;
-        e.preventDefault(); // Prevent scrolling while dragging
+        e.preventDefault();
 
         const dy = touch.clientY - touchStartY.current;
         setTouchOffset(dy);
 
-        // Calculate which item we're hovering over
         if (!gridRef.current) return;
         const cards = gridRef.current.querySelectorAll("[data-page-idx]");
         for (const card of Array.from(cards)) {
@@ -194,7 +188,6 @@ export function PdfMerge() {
                 touch.clientX >= rect.left && touch.clientX <= rect.right) {
                 const targetIdx = Number(card.getAttribute("data-page-idx"));
                 if (!isNaN(targetIdx) && targetIdx !== touchDragIndex) {
-                    // Swap
                     setPages(prev => {
                         const items = [...prev];
                         const [dragged] = items.splice(touchDragIndex, 1);
@@ -278,8 +271,8 @@ export function PdfMerge() {
             >
                 {isLoading ? (
                     <div className="text-center">
-                        <Loader2 className="w-8 h-8 mx-auto text-stone-400 animate-spin mb-2" />
-                        <p className="text-stone-500">Loading PDF...</p>
+                        <Loader2 className="w-8 h-8 mx-auto text-muted animate-spin mb-2" />
+                        <p className="text-secondary">Loading PDF...</p>
                     </div>
                 ) : undefined}
             </FileUploader>
@@ -289,8 +282,8 @@ export function PdfMerge() {
     return (
         <div className="space-y-4">
             {/* File info bar */}
-            <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-                <FileText className="w-5 h-5 text-stone-500 shrink-0" />
+            <div className="flex items-center gap-3 p-3 bg-surface-subtle rounded-lg">
+                <FileText className="w-5 h-5 text-secondary shrink-0" />
                 <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2">
                     {files.map(file => (
                         <span key={file.id} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${file.color}`}>
@@ -301,7 +294,7 @@ export function PdfMerge() {
                 <div className="flex items-center gap-1 shrink-0">
                     <button
                         onClick={handleReset}
-                        className="p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        className="p-1.5 rounded-lg text-muted hover:text-error-text hover:bg-error-bg transition-colors"
                         title="Clear all"
                     >
                         <RotateCcw className="w-4 h-4" />
@@ -318,12 +311,12 @@ export function PdfMerge() {
                 compact
             >
                 {isLoading ? (
-                    <div className="flex items-center gap-2 text-stone-500">
+                    <div className="flex items-center gap-2 text-secondary">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span className="text-sm">Loading pages...</span>
                     </div>
                 ) : (
-                    <p className="text-stone-500 text-sm">
+                    <p className="text-secondary text-sm">
                         Drop more PDF files here or click to add
                     </p>
                 )}
@@ -339,7 +332,7 @@ export function PdfMerge() {
             {/* Page grid */}
             {!isLoading && pages.length > 0 && (
                 <div className="space-y-2">
-                    <p className="text-xs text-stone-400">
+                    <p className="text-xs text-muted">
                         {pages.length} page{pages.length !== 1 ? "s" : ""} · <span className="hidden sm:inline">Drag to reorder</span><span className="sm:hidden">Use arrows to reorder</span>
                     </p>
                     <div
@@ -357,20 +350,18 @@ export function PdfMerge() {
                                 <div
                                     key={page.id}
                                     data-page-idx={idx}
-                                    // Desktop HTML5 drag
                                     draggable={!isProcessing}
                                     onDragStart={() => handleDragStart(page.id)}
                                     onDragOver={(e) => handleDragOver(e, page.id)}
                                     onDragEnd={handleDragEnd}
-                                    // Mobile touch drag
                                     onTouchStart={(e) => handleTouchStart(e, idx)}
                                     className={`
-                                        relative group rounded-lg overflow-hidden border-2 bg-white transition-all
+                                        relative group rounded-lg overflow-hidden border-2 bg-surface transition-all
                                         ${draggedId === page.id
-                                            ? "opacity-50 scale-95 border-stone-400"
+                                            ? "opacity-50 scale-95 border-border-strong"
                                             : isTouchDragging
                                                 ? "opacity-75 scale-105 border-blue-400 shadow-lg z-20"
-                                                : "border-stone-200 hover:border-stone-400 shadow-sm"
+                                                : "border-border hover:border-border-strong shadow-sm"
                                         }
                                         ${!isProcessing ? "cursor-move" : ""}
                                     `}
@@ -396,7 +387,7 @@ export function PdfMerge() {
                                     </div>
 
                                     {/* Page number */}
-                                    <div className="absolute bottom-1 left-1 px-2 py-0.5 rounded bg-stone-900/70 text-white text-xs">
+                                    <div className="absolute bottom-1 left-1 px-2 py-0.5 rounded bg-primary/70 text-canvas text-xs">
                                         {idx + 1}
                                     </div>
 
@@ -405,14 +396,14 @@ export function PdfMerge() {
                                         <button
                                             onClick={(e) => { e.stopPropagation(); movePage(idx, "up"); }}
                                             disabled={idx === 0}
-                                            className="p-1 rounded bg-white/90 text-stone-500 disabled:opacity-30 shadow-sm active:bg-stone-100"
+                                            className="p-1 rounded bg-surface/90 text-secondary disabled:opacity-30 shadow-sm active:bg-surface-subtle"
                                         >
                                             <ChevronUp className="w-3 h-3" />
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); movePage(idx, "down"); }}
                                             disabled={idx === pages.length - 1}
-                                            className="p-1 rounded bg-white/90 text-stone-500 disabled:opacity-30 shadow-sm active:bg-stone-100"
+                                            className="p-1 rounded bg-surface/90 text-secondary disabled:opacity-30 shadow-sm active:bg-surface-subtle"
                                         >
                                             <ChevronDown className="w-3 h-3" />
                                         </button>
@@ -424,7 +415,7 @@ export function PdfMerge() {
                                             e.stopPropagation();
                                             removePage(page.id);
                                         }}
-                                        className="absolute top-7 right-1 p-1 rounded-full bg-white/80 text-stone-400 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-red-100 hover:text-red-500 transition-all"
+                                        className="absolute top-7 right-1 p-1 rounded-full bg-surface/80 text-muted sm:opacity-0 sm:group-hover:opacity-100 hover:bg-error-bg hover:text-error-text transition-all"
                                     >
                                         <X className="w-3 h-3" />
                                     </button>
@@ -437,7 +428,7 @@ export function PdfMerge() {
 
             {/* Error */}
             {(previewError || error) && (
-                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 flex items-center gap-2">
+                <div className="bg-error-bg border border-error-border rounded-lg px-4 py-3 text-error-text flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     {previewError || error}
                 </div>
@@ -452,10 +443,10 @@ export function PdfMerge() {
 
             {/* Success */}
             {state === "done" && (
-                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700 space-y-1">
+                <div className="bg-success-bg border border-success-border rounded-lg px-4 py-3 text-success-text space-y-1">
                     <p>Files merged successfully! Download started.</p>
                     {linkStats && linkStats.linksFound > 0 && (
-                        <p className="text-sm text-green-600">
+                        <p className="text-sm text-success-text/80">
                             Links: {linkStats.externalPreserved + linkStats.internalRewritten + linkStats.otherPreserved} preserved
                             {linkStats.internalRemoved > 0 && `, ${linkStats.internalRemoved} removed because their targets are unavailable in the merged document`}
                         </p>

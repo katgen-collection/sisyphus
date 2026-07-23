@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { navItems } from "./navItems";
+import { ThemeToggle } from "./theme/ThemeToggle";
 
 const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
 // Same-tab-only notification; intentionally NOT the "storage" event, to avoid
@@ -60,7 +61,7 @@ export function Sidebar() {
     <aside
       className={`
         hidden lg:flex flex-col h-screen fixed left-0 top-0
-        bg-stone-50/40 backdrop-blur-xl border-r border-stone-200
+        bg-glass backdrop-blur-xl border-r border-border
         transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
         overflow-hidden z-20
         ${collapsed ? "w-16" : "w-64"}
@@ -69,14 +70,14 @@ export function Sidebar() {
       {/* Logo Section */}
       <div
         className={`
-          border-b border-stone-200 flex items-center
+          border-b border-border flex items-center
           transition-all duration-300
           ${collapsed ? "px-3 py-5 justify-center" : "px-6 py-8"}
         `}
       >
         <Link href="/" className="flex items-center gap-3 group min-w-0">
           <Image
-            src="/assets/logo/logo_svg.svg"
+            src="/assets/logo/logo-transparent-512.png"
             alt="Sisyphus"
             width={56}
             height={56}
@@ -89,10 +90,10 @@ export function Sidebar() {
               ${collapsed ? "w-0 opacity-0" : "w-auto opacity-100"}
             `}
           >
-            <h1 className="text-lg font-semibold text-stone-800 tracking-wide whitespace-nowrap">
+            <h1 className="text-lg font-semibold text-primary tracking-wide whitespace-nowrap">
               Sisyphus
             </h1>
-            <p className="text-xs text-stone-400 tracking-wider uppercase whitespace-nowrap">
+            <p className="text-xs text-muted tracking-wider uppercase whitespace-nowrap">
               Privacy Tools
             </p>
           </div>
@@ -118,16 +119,16 @@ export function Sidebar() {
                   ${collapsed ? "justify-center p-3" : "gap-3 px-4 py-3"}
                   ${
                     isActive
-                      ? "bg-stone-100 text-stone-900 border border-stone-200"
-                      : "text-stone-500 hover:text-stone-800 hover:bg-stone-50 border border-transparent"
+                      ? "bg-surface-subtle text-primary border border-border"
+                      : "text-secondary hover:text-primary hover:bg-surface-subtle border border-transparent"
                   }
                 `}
               >
                 <Icon
                   className={`w-5 h-5 shrink-0 ${
                     isActive
-                      ? "text-stone-700"
-                      : "text-stone-400 group-hover:text-stone-600"
+                      ? "text-secondary"
+                      : "text-muted group-hover:text-secondary"
                   }`}
                 />
                 {/* Label — hidden when collapsed */}
@@ -145,27 +146,32 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {/* Footer: Quote (expanded) + Collapse toggle */}
-      <div className={`border-t border-stone-200 ${collapsed ? "p-3" : "px-6 py-5"}`}>
+      {/* Footer: Quote (expanded) + theme + collapse controls */}
+      <div className={`border-t border-border ${collapsed ? "p-3" : "px-6 py-5"}`}>
         {/* Quote — only shown when expanded */}
         {!collapsed && (
           <div className="mb-4 overflow-hidden">
-            <p className="text-xs text-stone-500 italic leading-relaxed">
+            <p className="text-xs text-secondary italic leading-relaxed">
               &quot;One must imagine Sisyphus happy.&quot;
             </p>
-            <p className="text-xs text-stone-400 mt-1">— Camus</p>
+            <p className="text-xs text-muted mt-1">— Camus</p>
           </div>
         )}
 
-        {/* Toggle button */}
+        <div className="mb-2">
+          <ThemeToggle collapsed={collapsed} />
+        </div>
+
+        {/* Collapse button */}
         <button
           onClick={toggle}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={`
             flex items-center justify-center rounded-xl
-            text-stone-400 hover:text-stone-700 hover:bg-stone-100
-            transition-all duration-200 border border-transparent hover:border-stone-200
-            ${collapsed ? "w-10 h-10 mx-auto" : "w-full py-2 gap-2 px-3"}
+            text-muted hover:text-secondary hover:bg-surface-subtle
+            transition-all duration-200 border border-transparent hover:border-border
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus
+            ${collapsed ? "min-h-11 min-w-11 mx-auto" : "min-h-11 w-full gap-2 px-3"}
           `}
         >
           {collapsed ? (

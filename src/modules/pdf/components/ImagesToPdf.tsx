@@ -101,13 +101,13 @@ export function ImagesToPdf() {
       {images.length > 0 && (
         <>
           <div className="flex items-center justify-between">
-            <p className="text-sm text-stone-500">
+            <p className="text-sm text-secondary">
               {images.length} image{images.length !== 1 ? "s" : ""} — drag to reorder
             </p>
             <button
               onClick={clearAll}
               disabled={isProcessing}
-              className="text-sm text-stone-500 hover:text-stone-700 underline"
+              className="text-sm text-secondary hover:text-primary underline"
             >
               Clear all
             </button>
@@ -124,7 +124,7 @@ export function ImagesToPdf() {
                 className={`
                   relative aspect-square rounded-lg overflow-hidden border-2 cursor-move
                   transition-all duration-150
-                  ${draggedId === img.id ? "opacity-50 border-stone-400" : "border-stone-200 hover:border-stone-400"}
+                  ${draggedId === img.id ? "opacity-50 border-border-strong" : "border-border hover:border-border-strong"}
                 `}
               >
                 <img
@@ -133,14 +133,14 @@ export function ImagesToPdf() {
                   className="w-full h-full object-cover"
                 />
                 {/* Page number badge */}
-                <span className="absolute bottom-1 left-1 bg-stone-800/80 text-stone-50 text-xs px-1.5 py-0.5 rounded">
+                <span className="absolute bottom-1 left-1 bg-primary/80 text-canvas text-xs px-1.5 py-0.5 rounded">
                   {idx + 1}
                 </span>
                 {/* Remove button */}
                 <button
                   onClick={() => removeImage(img.id)}
                   disabled={isProcessing}
-                  className="absolute top-1 right-1 w-5 h-5 bg-stone-800/80 hover:bg-red-600 text-stone-50 rounded-full flex items-center justify-center text-xs"
+                  className="absolute top-1 right-1 w-5 h-5 bg-primary/80 hover:bg-red-600 text-canvas rounded-full flex items-center justify-center text-xs"
                 >
                   ×
                 </button>
@@ -157,13 +157,13 @@ export function ImagesToPdf() {
       )}
 
       {state === "error" && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700">
+        <div className="bg-error-bg border border-error-border rounded-lg px-4 py-3 text-error-text">
           {error}
         </div>
       )}
 
       {state === "done" && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700">
+        <div className="bg-success-bg border border-success-border rounded-lg px-4 py-3 text-success-text">
           PDF created successfully!
         </div>
       )}

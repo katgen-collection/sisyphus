@@ -17,7 +17,7 @@ const PdfToImages = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 text-stone-400 animate-spin" />
+        <Loader2 className="w-6 h-6 text-muted animate-spin" />
       </div>
     ),
   }
@@ -68,7 +68,7 @@ const tabs: ToolTab<PdfTab>[] = [
  * Tabbed PDF tools interface.
  */
 export function PdfTools() {
-  const [activeTab, setActiveTab] = useState<PdfTab>("merge"); // Default to merge as it's the requested feature
+  const [activeTab, setActiveTab] = useState<PdfTab>("merge");
 
   return (
     <div className="space-y-6">

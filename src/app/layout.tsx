@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BottomNav, Sidebar, OfflineIndicator } from "@/components";
+import { ThemeScript } from "@/components/theme/ThemeScript";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,7 +63,6 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#292524",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -75,23 +76,35 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-sidebar="expanded">
+    <html
+      lang="en"
+      data-sidebar="expanded"
+      data-theme="light"
+      suppressHydrationWarning
+    >
       <head>
+        <meta
+          name="theme-color"
+          content="#fafaf9"
+          data-sisyphus-theme-color=""
+        />
         <link rel="apple-touch-icon" href="/assets/logo/icon-192.png" />
+        <ThemeScript />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-stone-50 min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
         <OfflineIndicator />
-        
+        <ThemeToggle mobile />
+
         {/* Desktop Sidebar */}
         <Sidebar />
-        
+
         {/* Main content area - margin driven by data-sidebar CSS rules */}
         <main className="pb-24 lg:pb-8 min-h-screen">
           {children}
         </main>
-        
+
         {/* Mobile Bottom Nav */}
         <BottomNav />
       </body>

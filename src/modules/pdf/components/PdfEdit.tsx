@@ -331,8 +331,8 @@ export function PdfEdit() {
             >
                 {isLoading ? (
                     <div className="text-center">
-                        <Loader2 className="w-8 h-8 mx-auto text-stone-400 animate-spin mb-2" />
-                        <p className="text-stone-500">Loading PDF...</p>
+                        <Loader2 className="w-8 h-8 mx-auto text-muted animate-spin mb-2" />
+                        <p className="text-secondary">Loading PDF...</p>
                     </div>
                 ) : undefined}
             </FileUploader>
@@ -345,27 +345,27 @@ export function PdfEdit() {
             <div className="flex items-center justify-between text-sm">
                 <button
                     onClick={handleBack}
-                    className="flex items-center gap-1 text-stone-500 hover:text-stone-700 transition-colors"
+                    className="flex items-center gap-1 text-secondary hover:text-primary transition-colors"
                 >
                     <ChevronLeft className="w-4 h-4" />
                     Back
                 </button>
-                <div className="text-stone-400">
+                <div className="text-muted">
                     {annotations.length} annotation{annotations.length !== 1 ? "s" : ""}
                 </div>
             </div>
 
             {/* File info */}
-            <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-                <FileText className="w-5 h-5 text-stone-500" />
+            <div className="flex items-center gap-3 p-3 bg-surface-subtle rounded-lg">
+                <FileText className="w-5 h-5 text-secondary" />
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-700 truncate">{file?.file.name}</p>
-                    <p className="text-xs text-stone-400">{numPages} page{numPages !== 1 ? "s" : ""}</p>
+                    <p className="text-sm font-medium text-primary truncate">{file?.file.name}</p>
+                    <p className="text-xs text-muted">{numPages} page{numPages !== 1 ? "s" : ""}</p>
                 </div>
             </div>
 
             {/* Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-stone-50 rounded-lg border border-stone-200">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-surface-subtle rounded-lg border border-border">
                 <div className="flex items-center gap-2">
                     <Button variant="secondary" onClick={addText} disabled={isProcessing} className="h-8 text-xs px-3">
                         <Type className="w-4 h-4 mr-1.5" />
@@ -423,24 +423,24 @@ export function PdfEdit() {
                         <button
                             onClick={() => setSelectedPageIndex(i => Math.max(0, i - 1))}
                             disabled={selectedPageIndex === 0}
-                            className="p-2 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="p-2 rounded-lg bg-surface-subtle text-secondary hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <span className="text-sm text-stone-500">
+                        <span className="text-sm text-secondary">
                             Page {selectedPageIndex + 1} of {numPages}
                         </span>
                         <button
                             onClick={() => setSelectedPageIndex(i => Math.min(numPages - 1, i + 1))}
                             disabled={selectedPageIndex === numPages - 1}
-                            className="p-2 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="p-2 rounded-lg bg-surface-subtle text-secondary hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
 
                     {/* Hint for mobile users */}
-                    <p className="text-xs text-stone-400 sm:hidden text-center">
+                    <p className="text-xs text-muted sm:hidden text-center">
                         Tap to select · Double-tap text to edit · Drag to move
                     </p>
 
@@ -563,7 +563,7 @@ export function PdfEdit() {
 
                                         {/* Edit text hint on selected text annotations */}
                                         {isSelected && ann.type === "text" && !isEditing && (
-                                            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-stone-800 text-white text-[10px] whitespace-nowrap z-20">
+                                            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-primary text-canvas text-[10px] whitespace-nowrap z-20">
                                                 Double-tap to edit
                                             </div>
                                         )}
@@ -574,7 +574,7 @@ export function PdfEdit() {
                             {/* Hint overlay when no annotations */}
                             {pageAnnotations.length === 0 && annotations.length === 0 && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-stone-900/10 pointer-events-none">
-                                    <div className="px-4 py-2 rounded-lg bg-white/90 text-stone-600 text-sm shadow-lg">
+                                    <div className="px-4 py-2 rounded-lg bg-surface/90 text-secondary text-sm shadow-lg">
                                         Use the toolbar to add text or images
                                     </div>
                                 </div>
@@ -590,10 +590,10 @@ export function PdfEdit() {
                 if (!ann || ann.type !== "text") return null;
 
                 return (
-                    <div className="p-4 bg-stone-50 rounded-lg border border-stone-200">
-                        <h4 className="text-sm font-medium text-stone-700 mb-3">Text Properties</h4>
+                    <div className="p-4 bg-surface-subtle rounded-lg border border-border">
+                        <h4 className="text-sm font-medium text-primary mb-3">Text Properties</h4>
                         <div className="flex flex-wrap gap-4 items-center">
-                            <label className="text-xs text-stone-500 flex items-center gap-2">
+                            <label className="text-xs text-secondary flex items-center gap-2">
                                 Color
                                 <input
                                     type="color"
@@ -603,10 +603,10 @@ export function PdfEdit() {
                                             a.id === ann.id ? { ...a, color: e.target.value } : a
                                         ));
                                     }}
-                                    className="w-8 h-8 rounded cursor-pointer border border-stone-300"
+                                    className="w-8 h-8 rounded cursor-pointer border border-border"
                                 />
                             </label>
-                            <label className="text-xs text-stone-500 flex items-center gap-2">
+                            <label className="text-xs text-secondary flex items-center gap-2">
                                 Size
                                 <input
                                     type="number"
@@ -618,7 +618,7 @@ export function PdfEdit() {
                                             a.id === ann.id ? { ...a, size: Number(e.target.value) } : a
                                         ));
                                     }}
-                                    className="w-16 p-1 text-sm border rounded border-stone-300"
+                                    className="w-16 p-1 text-sm border rounded border-border"
                                 />
                             </label>
                             {/* Edit text button for mobile */}
@@ -635,7 +635,7 @@ export function PdfEdit() {
 
             {/* Error */}
             {(previewError || error) && (
-                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 flex items-center gap-2">
+                <div className="bg-error-bg border border-error-border rounded-lg px-4 py-3 text-error-text flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     {previewError || error}
                 </div>
@@ -650,7 +650,7 @@ export function PdfEdit() {
 
             {/* Success */}
             {state === "done" && (
-                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700">
+                <div className="bg-success-bg border border-success-border rounded-lg px-4 py-3 text-success-text">
                     PDF saved successfully! Download started.
                 </div>
             )}

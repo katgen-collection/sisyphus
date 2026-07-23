@@ -78,10 +78,10 @@ export function MarkdownEditor() {
       >
         {/* Editor pane */}
         {(viewMode === "split" || viewMode === "editor") && (
-          <div className="flex flex-col rounded-xl border border-stone-200 overflow-hidden shadow-sm">
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-stone-50 border-b border-stone-200">
-              <PenLine className="w-3.5 h-3.5 text-stone-400" />
-              <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
+          <div className="flex flex-col rounded-xl border border-border overflow-hidden shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-surface-subtle border-b border-border">
+              <PenLine className="w-3.5 h-3.5 text-muted" />
+              <span className="text-xs font-medium text-secondary uppercase tracking-wider">
                 Editor
               </span>
             </div>
@@ -90,7 +90,7 @@ export function MarkdownEditor() {
               value={markdown}
               onChange={(e) => setMarkdown(e.target.value)}
               spellCheck={false}
-              className="flex-1 w-full p-4 font-mono text-sm text-stone-800 bg-white resize-none outline-none leading-relaxed placeholder:text-stone-300"
+              className="flex-1 w-full p-4 font-mono text-sm text-primary bg-surface resize-none outline-none leading-relaxed placeholder:text-muted"
               placeholder="Type your markdown here…"
               style={{ minHeight: "60vh" }}
             />
